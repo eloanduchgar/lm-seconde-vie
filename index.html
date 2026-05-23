@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LM Seconde Vie — Recyclerie Lycée Louise Michel</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#C0392B;--red2:#E74C3C;--red3:#922B21;--red-pale:#FEF0EF;--red-mid:#FADBD8;
+  --black:#0D0D0D;--dark:#1A1A1A;--dark2:#252525;
+  --gray:#888;--gray2:#555;
+  --light:#F5F2EF;--lighter:#FAFAF8;--white:#fff;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --ff-display:'Playfair Display',Georgia,serif;
+  --ff-body:'Outfit',sans-serif;
+  --r:10px;--r2:16px;--r3:22px;
+  --shadow:0 2px 20px rgba(0,0,0,0.08);
+  --shadow2:0 8px 40px rgba(0,0,0,0.14);
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--ff-body);background:var(--light);color:var(--black);min-height:100vh;font-size:15px;line-height:1.6}
+
+/* ══ LOGIN SCREEN ══ */
+#login-screen{position:fixed;inset:0;background:var(--dark);display:flex;align-items:center;justify-content:center;z-index:9000}
+#login-screen.hidden{display:none}
+.login-box{background:var(--white);border-radius:var(--r3);padding:48px 40px;width:420px;max-width:92vw;text-align:center;box-shadow:0 32px 100px rgba(0,0,0,0.4)}
+.login-logo{width:56px;height:56px;background:var(--red);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 20px}
+.login-title{font-family:var(--ff-display);font-size:28px;font-weight:900;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--gray);margin-bottom:32px}
+.login-field{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;text-align:left}
+.login-field label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray2)}
+.login-input{padding:13px 16px;border:1.5px solid var(--border2);border-radius:var(--r);font-family:var(--ff-body);font-size:15px;outline:none;transition:border-color .2s}
+.login-input:focus{border-color:var(--red)}
+.login-btn{width:100%;padding:14px;background:var(--red);color:white;border:none;border-radius:var(--r);font-family:var(--ff-display);font-size:16px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .2s}
+.login-btn:hover{background:var(--red3)}
+.login-err{color:var(--red);font-size:13px;margin-top:10px;min-height:18px}
+.login-spinner{display:none;margin-top:14px;color:var(--gray);font-size:13px}
+
+/* ══ LOADING OVERLAY ══ */
+#loading-overlay{position:fixed;inset:0;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:8000;gap:16px}
+#loading-overlay.hidden{display:none}
+.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{color:rgba(255,255,255,0.5);font-size:13px;letter-spacing:1px}
+
+/* ══ APP ══ */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:240px;background:var(--dark);flex-shrink:0;display:flex;flex-direction:column;position:relative;z-index:10}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:rgba(255,255,255,0.06)}
+.brand{padding:28px 24px 24px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.brand-mark{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.brand-icon{width:36px;height:36px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.brand-name{font-family:var(--ff-display);font-size:16px;font-weight:900;color:var(--white);letter-spacing:-0.3px;line-height:1.1}
+.brand-sub{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:2px;text-transform:uppercase;margin-top:2px;padding-left:46px}
+.nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:var(--r);cursor:pointer;transition:all .2s;color:rgba(255,255,255,0.45);font-size:13.5px;font-weight:500;border:none;background:transparent;width:100%;text-align:left}
+.nav-item:hover{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.06)}
+.nav-item.active{color:var(--white);background:var(--red)}
+.nav-icon{width:18px;height:18px;flex-shrink:0;opacity:.8}
+.nav-item.active .nav-icon{opacity:1}
+.nav-sep{height:1px;background:rgba(255,255,255,0.06);margin:10px 0}
+.sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,0.07);display:flex;flex-direction:column;gap:6px}
+.sidebar-version{font-size:10px;color:rgba(255,255,255,0.2);text-align:center;letter-spacing:1px}
+.btn-logout{background:rgba(255,255,255,0.06);border:none;color:rgba(255,255,255,0.4);font-size:12px;font-family:var(--ff-body);padding:8px 12px;border-radius:8px;cursor:pointer;width:100%;transition:all .2s}
+.btn-logout:hover{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7)}
+.sync-status{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:rgba(255,255,255,0.25)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#4CAF50}
+.sync-dot.syncing{background:var(--red);animation:pulse .8s infinite}
+.sync-dot.offline{background:var(--gray)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.page-title{font-family:var(--ff-display);font-size:22px;font-weight:700;color:var(--black)}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.topbar-stat{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--light);border-radius:var(--r);border:1px solid var(--border)}
+.topbar-stat-val{font-weight:700;font-size:15px;color:var(--red)}
+.topbar-stat-label{font-size:12px;color:var(--gray);font-weight:400}
+.content{flex:1;overflow-y:auto;padding:28px 32px}
+
+.page{display:none}
+.page.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+.stat{background:var(--white);border-radius:var(--r2);padding:22px 24px;border:1px solid var(--border);position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;background:var(--red-pale);transform:translate(30px,-30px)}
+.stat-label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1.2px;font-weight:600;margin-bottom:8px}
+.stat-val{font-family:var(--ff-display);font-size:36px;font-weight:900;color:var(--red);line-height:1}
+.stat-delta{font-size:12px;color:var(--gray);margin-top:6px}
+
+.card{background:var(--white);border-radius:var(--r2);padding:22px 24px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.card-title{font-family:var(--ff-display);font-size:17px;font-weight:700;color:var(--black);margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:var(--r);font-family:var(--ff-body);font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s;border:none;white-space:nowrap}
+.btn-red{background:var(--red);color:var(--white)}
+.btn-red:hover{background:var(--red3);transform:translateY(-1px);box-shadow:0 4px 16px rgba(192,57,43,0.35)}
+.btn-outline{background:transparent;color:var(--red);border:1.5px solid var(--red)}
+.btn-outline:hover{background:var(--red-pale)}
+.btn-dark{background:var(--dark);color:var(--white)}
+.btn-dark:hover{background:var(--dark2)}
+.btn-ghost{background:var(--light);color:var(--dark);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--gray)}
+.btn-sm{padding:8px 14px;font-size:12.5px}
+.btn-lg{padding:14px 28px;font-size:15px}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11.5px;font-weight:600;color:var(--gray2);text-transform:uppercase;letter-spacing:0.8px}
+.input,.select{padding:11px 14px;border:1.5px solid var(--border2);border-radius:var(--r);font-family:var(--ff-body);font-size:14px;color:var(--black);background:var(--white);outline:none;transition:border-color .2s;width:100%}
+.input:focus,.select:focus{border-color:var(--red)}
+.input::placeholder{color:#bbb}
+
+.badge{display:inline-flex;align-items:center;padding:4px 12px;border-radius:100px;font-size:12px;font-weight:600}
+.badge-red{background:var(--red-mid);color:var(--red3)}
+.badge-gray{background:var(--light);color:var(--gray2)}
+.badge-gold{background:#FDF3DC;color:#8B6914}
+.badge-green{background:#EAF5EE;color:#1E7A40}
+
+.table{width:100%;border-collapse:collapse}
+.table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.table td{padding:13px 14px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:middle}
+.table tr:last-child td{border-bottom:none}
+.table tr:hover td{background:#FAFAFA}
+
+.histo{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--border)}
+.histo:last-child{border-bottom:none}
+.histo-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.histo-icon.plus{background:#EAF5EE}
+.histo-icon.minus{background:var(--red-pale)}
+.histo-info{flex:1}
+.histo-name{font-size:14px;font-weight:500;color:var(--black)}
+.histo-sub{font-size:12px;color:var(--gray);margin-top:1px}
+.histo-pts{font-family:var(--ff-display);font-size:16px;font-weight:700}
+.histo-pts.plus{color:#1E7A40}
+.histo-pts.minus{color:var(--red)}
+
+.divider{display:flex;align-items:center;gap:14px;margin:16px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border2)}
+.divider span{font-size:11.5px;color:var(--gray);font-weight:600;letter-spacing:.5px}
+
+/* VIRTUAL CARD */
+.vcard{background:var(--dark);border-radius:var(--r3);padding:28px;color:var(--white);position:relative;overflow:hidden;min-height:200px}
+.vcard::before{content:'LM';font-family:var(--ff-display);font-size:180px;font-weight:900;color:rgba(255,255,255,0.03);position:absolute;top:-30px;right:-20px;line-height:1;pointer-events:none}
+.vcard-stripe{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--red3),var(--red),var(--red2))}
+.vcard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px}
+.vcard-brand-name{font-family:var(--ff-display);font-size:16px;font-weight:900}
+.vcard-brand-school{font-size:10px;opacity:.4;letter-spacing:2px;text-transform:uppercase}
+.vcard-code-box{background:rgba(255,255,255,0.06);border-radius:var(--r);padding:8px;border:1px solid rgba(255,255,255,0.1)}
+.vcard-holder{font-size:13px;opacity:.5;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px}
+.vcard-name{font-family:var(--ff-display);font-size:22px;font-weight:700;letter-spacing:-.3px}
+.vcard-id{font-size:10.5px;opacity:.3;letter-spacing:3px;margin-top:4px;font-family:monospace}
+.vcard-bottom{display:flex;align-items:flex-end;justify-content:space-between;margin-top:20px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.1)}
+.vcard-pts-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;opacity:.45;margin-bottom:4px}
+.vcard-pts-val{font-family:var(--ff-display);font-size:44px;font-weight:900;line-height:1;color:var(--white)}
+.vcard-pts-unit{font-size:14px;opacity:.5;margin-left:4px}
+.vcard-class{font-size:12px;opacity:.4;text-align:right}
+
+.toast-container{position:fixed;bottom:28px;right:28px;display:flex;flex-direction:column;gap:10px;z-index:9999}
+.toast{background:var(--dark);color:var(--white);border-radius:var(--r2);padding:14px 20px;font-size:13.5px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow2);border-left:3px solid var(--red);transform:translateX(120%);transition:transform .35s cubic-bezier(.34,1.56,.64,1);min-width:280px}
+.toast.show{transform:translateX(0)}
+.toast-icon{font-size:18px;flex-shrink:0}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:var(--r3);padding:32px;width:480px;max-width:92vw;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.25)}
+.modal-title{font-family:var(--ff-display);font-size:22px;font-weight:700;margin-bottom:24px;padding-right:36px}
+.modal-close{position:absolute;top:18px;right:18px;width:34px;height:34px;border-radius:50%;background:var(--light);border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--border2)}
+
+#qr-reader{width:100%!important;border:none!important}
+#qr-reader>div{border:none!important;box-shadow:none!important}
+
+.bareme-row{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border)}
+.bareme-row:hover{background:var(--lighter)}
+.bareme-row:last-child{border-bottom:none}
+.bareme-row-header{background:var(--light)!important;border-bottom:2px solid var(--border2)}
+.bareme-row-header span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray)}
+.pts-input{width:76px;padding:8px 10px;border:1.5px solid var(--border2);border-radius:8px;font-family:var(--ff-body);font-size:13px;font-weight:600;color:var(--red3);text-align:center;outline:none;transition:border-color .2s}
+.pts-input:focus{border-color:var(--red)}
+.pts-cost{color:var(--red)}
+
+.av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-size:15px;font-weight:700;flex-shrink:0}
+
+.pts-highlight{background:var(--dark);border-radius:var(--r2);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;margin:16px 0}
+.pts-highlight-num{font-family:var(--ff-display);font-size:42px;font-weight:900;color:var(--white);line-height:1}
+.pts-highlight-label{font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px}
+.pts-highlight-cat{font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px}
+
+.share-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.share-tile{background:var(--white);border:1px solid var(--border2);border-radius:var(--r2);padding:16px 10px;text-align:center;cursor:pointer;transition:all .2s}
+.share-tile:hover{border-color:var(--red);transform:translateY(-2px);box-shadow:var(--shadow)}
+.share-tile-icon{font-size:26px;margin-bottom:6px}
+.share-tile-label{font-size:11.5px;color:var(--gray);font-weight:500}
+
+.search-wrap{position:relative;margin-bottom:16px}
+.search-wrap input{padding-left:40px}
+.search-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none}
+
+.sect{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray);margin-bottom:14px;margin-top:28px}
+.sect:first-child{margin-top:0}
+
+.pts-pill{background:var(--red-pale);color:var(--red3);padding:5px 14px;border-radius:100px;font-weight:700;font-size:14px;white-space:nowrap}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:10px}
+
+.radio-group{display:flex;gap:8px;flex-wrap:wrap}
+.radio-btn{padding:8px 16px;border:1.5px solid var(--border2);border-radius:var(--r);font-family:var(--ff-body);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;background:transparent;color:var(--dark)}
+.radio-btn.active{border-color:var(--red);background:var(--red-pale);color:var(--red3)}
+
+.empty{text-align:center;padding:48px 24px;color:var(--gray)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-text{font-size:15px;font-weight:500}
+
+.settings-group{background:var(--white);border-radius:var(--r2);border:1px solid var(--border);margin-bottom:20px;overflow:hidden}
+.settings-group-header{padding:16px 20px;border-bottom:1px solid var(--border);background:var(--lighter);display:flex;align-items:center;justify-content:space-between}
+.settings-group-title{font-weight:700;font-size:14px;color:var(--dark)}
+.settings-row{display:flex;align-items:center;padding:15px 20px;border-bottom:1px solid var(--border);gap:16px}
+.settings-row:last-child{border-bottom:none}
+.settings-row-label{flex:1}
+.settings-row-label strong{font-size:14px;font-weight:600;display:block}
+.settings-row-label span{font-size:12px;color:var(--gray)}
+
+.pwd-row{display:flex;gap:8px;align-items:center}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">♻</div>
+    <div class="login-title">LM Seconde Vie</div>
+    <div class="login-sub">Recyclerie · Lycée Louise Michel, Narbonne</div>
+    <div class="login-field">
+      <label>Mot de passe</label>
+      <input class="login-input" type="password" id="login-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Accéder →</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-spinner" id="login-spinner">Connexion en cours...</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text">CHARGEMENT DES DONNÉES…</div>
+</div>
+
+<!-- APP -->
+<div class="app" id="main-app" style="display:none">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">
+      <div class="brand-icon">♻</div>
+      <div class="brand-name">LM Seconde Vie</div>
+    </div>
+    <div class="brand-sub">Lycée Louise Michel</div>
+  </div>
+  <nav class="nav">
+    <button class="nav-item active" onclick="nav('accueil',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Tableau de bord
+    </button>
+    <button class="nav-item" onclick="nav('scanner',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17h3v3M14 20h3"/></svg>
+      Scanner
+    </button>
+    <button class="nav-item" onclick="nav('depot',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+      Dépôt article
+    </button>
+    <div class="nav-sep"></div>
+    <button class="nav-item" onclick="nav('eleves',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Élèves
+    </button>
+    <button class="nav-item" onclick="nav('baremes',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Barèmes
+    </button>
+    <button class="nav-item" onclick="nav('historique',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.34"/></svg>
+      Historique
+    </button>
+    <div class="nav-sep"></div>
+    <button class="nav-item" onclick="nav('reglages',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Réglages
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Synchronisé</span></div>
+    <button class="btn-logout" onclick="doLogout()">🔒 Se déconnecter</button>
+    <div class="sidebar-version">v3.0 · FIREBASE · LM SECONDE VIE</div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="page-title" id="topbar-title">Tableau de bord</div>
+    <div class="topbar-right">
+      <div class="topbar-stat"><span class="topbar-stat-val" id="tb-total-eleves">0</span><span class="topbar-stat-label">élèves</span></div>
+      <div class="topbar-stat"><span class="topbar-stat-val" id="tb-total-pts">0</span><span class="topbar-stat-label">points distribués</span></div>
+      <button class="btn btn-red btn-sm" onclick="nav('depot',document.querySelectorAll('.nav-item')[2])">+ Dépôt</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ACCUEIL -->
+    <div class="page active" id="page-accueil">
+      <div class="grid-4" style="margin-bottom:24px">
+        <div class="stat"><div class="stat-label">Élèves inscrits</div><div class="stat-val" id="s-eleves">0</div><div class="stat-delta">Total inscrits</div></div>
+        <div class="stat"><div class="stat-label">Articles déposés</div><div class="stat-val" id="s-articles">0</div><div class="stat-delta">Depuis l'ouverture</div></div>
+        <div class="stat"><div class="stat-label">Points crédités</div><div class="stat-val" id="s-credits">0</div><div class="stat-delta">Total accordés</div></div>
+        <div class="stat"><div class="stat-label">Points utilisés</div><div class="stat-val" id="s-depenses">0</div><div class="stat-delta">Articles repris</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Activité récente <button class="btn btn-ghost btn-sm" onclick="nav('historique',document.querySelectorAll('.nav-item')[5])">Tout voir →</button></div>
+          <div id="recent-list"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Aucune activité</div></div></div>
+        </div>
+        <div class="card"><div class="card-title">Top élèves 🏆</div><div id="top-eleves"></div></div>
+      </div>
+    </div>
+
+    <!-- SCANNER -->
+    <div class="page" id="page-scanner">
+      <div class="grid-2" style="align-items:start">
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">📷 Scan QR ou code barre</div>
+            <div id="qr-reader" style="border-radius:10px;overflow:hidden;background:#111"></div>
+            <div id="qr-scan-status" style="text-align:center;margin-top:12px;font-size:13px;color:var(--gray)">Cliquez pour activer la caméra</div>
+            <button class="btn btn-dark" style="width:100%;margin-top:12px" id="btn-cam" onclick="toggleCam()">📷 Activer la caméra</button>
+          </div>
+          <div class="divider"><span>ou saisir manuellement</span></div>
+          <div class="card">
+            <div style="display:flex;gap:10px">
+              <input class="input" id="scan-manual" placeholder="Nom, prénom ou ID élève..." style="flex:1" onkeydown="if(event.key==='Enter')manualSearch()">
+              <button class="btn btn-red" onclick="manualSearch()">Chercher</button>
+            </div>
+            <div id="search-results" style="margin-top:14px"></div>
+          </div>
+        </div>
+        <div id="scan-result-panel" style="display:none">
+          <div id="found-vcard" style="margin-bottom:16px"></div>
+          <div class="card" style="margin-bottom:12px">
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-red" style="flex:1" onclick="openCredit()">➕ Créditer</button>
+              <button class="btn btn-outline" style="flex:1" onclick="openRetrait()">➖ Retrait</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px">Envoyer la carte</div>
+            <div class="share-row">
+              <div class="share-tile" onclick="shareCard('email')"><div class="share-tile-icon">📧</div><div class="share-tile-label">Email</div></div>
+              <div class="share-tile" onclick="shareCard('sms')"><div class="share-tile-icon">💬</div><div class="share-tile-label">SMS</div></div>
+              <div class="share-tile" onclick="shareCard('print')"><div class="share-tile-icon">🖨️</div><div class="share-tile-label">Imprimer</div></div>
+            </div>
+          </div>
+        </div>
+        <div id="scan-empty-panel">
+          <div class="card" style="text-align:center;padding:48px">
+            <div style="font-size:52px;margin-bottom:16px">📱</div>
+            <div style="font-family:var(--ff-display);font-size:18px;font-weight:700;margin-bottom:8px">Scanner une carte élève</div>
+            <div style="font-size:13.5px;color:var(--gray)">Scannez le QR code ou le code barre<br>ou cherchez par nom</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DÉPÔT -->
+    <div class="page" id="page-depot">
+      <div class="grid-2" style="align-items:start">
+        <div class="card">
+          <div class="card-title">Enregistrer un dépôt</div>
+          <div class="field" style="margin-bottom:14px">
+            <label>Élève</label>
+            <select class="select" id="depot-eleve"><option value="">Sélectionner un élève...</option></select>
+          </div>
+          <div class="grid-2" style="margin-bottom:14px">
+            <div class="field">
+              <label>Catégorie</label>
+              <select class="select" id="depot-cat" onchange="updateDepotPts()"><option value="">Catégorie...</option></select>
+            </div>
+            <div class="field">
+              <label>État de l'article</label>
+              <div class="radio-group" id="depot-etat-group">
+                <button class="radio-btn active" onclick="setEtat('tbe',this)">TBE</button>
+                <button class="radio-btn" onclick="setEtat('be',this)">Bon état</button>
+                <button class="radio-btn" onclick="setEtat('use',this)">Usé</button>
+              </div>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:14px">
+            <label>Description (optionnel)</label>
+            <input class="input" id="depot-desc" placeholder="Pull rouge taille M...">
+          </div>
+          <div id="depot-preview" class="pts-highlight" style="display:none">
+            <div><div class="pts-highlight-label">Points à créditer</div><div class="pts-highlight-cat" id="depot-preview-cat">—</div></div>
+            <div><div class="pts-highlight-num" id="depot-preview-pts">—</div><div style="font-size:13px;color:rgba(255,255,255,0.4)">points</div></div>
+          </div>
+          <button class="btn btn-red btn-lg" style="width:100%;margin-top:16px" onclick="validerDepot()">✅ Valider et créditer</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Nouvel élève</div>
+          <div class="field" style="margin-bottom:14px"><label>Prénom</label><input class="input" id="nv-prenom" placeholder="Prénom"></div>
+          <div class="field" style="margin-bottom:14px"><label>Nom</label><input class="input" id="nv-nom" placeholder="Nom de famille"></div>
+          <div class="grid-2" style="margin-bottom:14px">
+            <div class="field"><label>Classe</label><input class="input" id="nv-classe" placeholder="2nde B, Tle A..."></div>
+            <div class="field"><label>Email</label><input class="input" id="nv-email" placeholder="eleve@lycee.fr" type="email"></div>
+          </div>
+          <button class="btn btn-dark" style="width:100%" onclick="creerEleve()">+ Créer la carte élève</button>
+          <div id="nv-result" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉLÈVES -->
+    <div class="page" id="page-eleves">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div class="search-wrap" style="flex:1;margin-bottom:0;margin-right:16px">
+          <span class="search-ico">🔍</span>
+          <input class="input" id="search-eleves" placeholder="Rechercher par nom, prénom, classe..." oninput="renderEleves()">
+        </div>
+        <button class="btn btn-red" onclick="nav('depot',document.querySelectorAll('.nav-item')[2])">+ Nouvel élève</button>
+      </div>
+      <div class="card" style="padding:0">
+        <table class="table">
+          <thead><tr><th>Élève</th><th>Classe</th><th>ID Carte</th><th>Points</th><th>Dépôts</th><th>Actions</th></tr></thead>
+          <tbody id="eleves-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BARÈMES -->
+    <div class="page" id="page-baremes">
+      <div class="grid-2" style="align-items:start">
+        <div class="card">
+          <div class="card-title">Points gagnés — Dépôt</div>
+          <div style="background:var(--light);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:12.5px;color:var(--gray2)">💡 Modifiez les cases puis sauvegardez.</div>
+          <div id="bareme-depot-container"></div>
+          <button class="btn btn-red" style="margin-top:16px;width:100%" onclick="saveBaremes()">💾 Sauvegarder les barèmes</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Points dépensés — Retrait</div>
+          <div id="bareme-retrait-container"></div>
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+            <div class="card-title" style="margin-bottom:14px">Catégories d'articles</div>
+            <div id="cats-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+            <div style="display:flex;gap:8px">
+              <input class="input" id="new-cat-name" placeholder="Nouvelle catégorie..." style="flex:1">
+              <button class="btn btn-dark btn-sm" onclick="addCategory()">Ajouter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div class="page" id="page-historique">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <div class="search-wrap" style="flex:1;margin-bottom:0;margin-right:16px">
+          <span class="search-ico">🔍</span>
+          <input class="input" id="search-histo" placeholder="Rechercher dans l'historique..." oninput="renderHistorique()">
+        </div>
+        <select class="select" id="filter-histo" style="width:160px" onchange="renderHistorique()">
+          <option value="all">Tout</option>
+          <option value="depot">Dépôts</option>
+          <option value="retrait">Retraits</option>
+        </select>
+      </div>
+      <div class="card" style="padding:0">
+        <table class="table">
+          <thead><tr><th>Date</th><th>Élève</th><th>Opération</th><th>Article</th><th>Points</th></tr></thead>
+          <tbody id="histo-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RÉGLAGES -->
+    <div class="page" id="page-reglages">
+      <div class="settings-group">
+        <div class="settings-group-header"><div class="settings-group-title">🏫 Informations de la recyclerie</div></div>
+        <div class="settings-row"><div class="settings-row-label"><strong>Nom de la recyclerie</strong><span>Affiché sur les cartes</span></div><input class="input" id="cfg-nom" style="max-width:240px"></div>
+        <div class="settings-row"><div class="settings-row-label"><strong>Établissement</strong></div><input class="input" id="cfg-ecole" style="max-width:240px"></div>
+        <div class="settings-row"><div class="settings-row-label"><strong>Email de contact</strong></div><input class="input" id="cfg-email" style="max-width:240px"></div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-header"><div class="settings-group-title">⚙️ Règles de fonctionnement</div></div>
+        <div class="settings-row"><div class="settings-row-label"><strong>Points minimum pour retrait</strong><span>Solde requis avant tout retrait</span></div><input class="input" id="cfg-min-pts" type="number" min="0" style="max-width:100px"></div>
+        <div class="settings-row"><div class="settings-row-label"><strong>Multiplicateur TBE</strong></div><input class="input" id="cfg-mult-tbe" type="number" min="0.1" step="0.1" style="max-width:100px"></div>
+        <div class="settings-row"><div class="settings-row-label"><strong>Multiplicateur Bon état</strong></div><input class="input" id="cfg-mult-be" type="number" min="0.1" step="0.1" style="max-width:100px"></div>
+        <div class="settings-row"><div class="settings-row-label"><strong>Multiplicateur Usé</strong></div><input class="input" id="cfg-mult-use" type="number" min="0.1" step="0.1" style="max-width:100px"></div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-header"><div class="settings-group-title">🔒 Sécurité</div></div>
+        <div class="settings-row">
+          <div class="settings-row-label"><strong>Changer le mot de passe</strong><span>Minimum 6 caractères</span></div>
+          <div class="pwd-row">
+            <input class="input" id="cfg-pwd-new" type="password" placeholder="Nouveau mot de passe" style="max-width:200px">
+            <button class="btn btn-dark btn-sm" onclick="changePwd()">Changer</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-header"><div class="settings-group-title">🗑️ Données</div></div>
+        <div class="settings-row"><div class="settings-row-label"><strong>Exporter les données</strong><span>Télécharger tout en JSON</span></div><button class="btn btn-ghost btn-sm" onclick="exportData()">📥 Exporter</button></div>
+        <div class="settings-row"><div class="settings-row-label"><strong>Réinitialiser tout</strong><span style="color:var(--red)">⚠️ Supprime toutes les données</span></div><button class="btn btn-sm" style="background:var(--red-mid);color:var(--red3)" onclick="resetAll()">🗑️ Réinitialiser</button></div>
+      </div>
+      <button class="btn btn-red btn-lg" onclick="saveConfig()">💾 Sauvegarder les réglages</button>
+    </div>
+
+  </div>
+</main>
+</div><!-- /app -->
+
+<!-- MODAL CRÉDIT -->
+<div class="modal-bg" id="modal-credit">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('credit')">✕</button>
+    <div class="modal-title">➕ Créditer des points</div>
+    <div id="credit-eleve-info" style="margin-bottom:16px"></div>
+    <div class="field" style="margin-bottom:12px"><label>Catégorie</label><select class="select" id="credit-cat" onchange="updateCreditPts()"><option value="">Choisir...</option></select></div>
+    <div class="field" style="margin-bottom:16px"><label>État</label>
+      <div class="radio-group" id="credit-etat-group">
+        <button class="radio-btn active" onclick="setCreditEtat('tbe',this)">TBE</button>
+        <button class="radio-btn" onclick="setCreditEtat('be',this)">Bon état</button>
+        <button class="radio-btn" onclick="setCreditEtat('use',this)">Usé</button>
+      </div>
+    </div>
+    <div id="credit-pts-display" class="pts-highlight" style="display:none">
+      <div><div class="pts-highlight-label">À créditer</div><div class="pts-highlight-cat" id="credit-cat-label">—</div></div>
+      <div class="pts-highlight-num" id="credit-pts-val">—</div>
+    </div>
+    <button class="btn btn-red btn-lg" style="width:100%;margin-top:16px" onclick="doCredit()">✅ Confirmer le crédit</button>
+  </div>
+</div>
+
+<!-- MODAL RETRAIT -->
+<div class="modal-bg" id="modal-retrait">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('retrait')">✕</button>
+    <div class="modal-title">➖ Retrait d'un article</div>
+    <div id="retrait-eleve-info" style="margin-bottom:16px"></div>
+    <div class="field" style="margin-bottom:16px"><label>Article repris</label><select class="select" id="retrait-cat"><option value="">Choisir un article...</option></select></div>
+    <div id="retrait-warning" style="display:none;padding:12px 16px;background:var(--red-pale);border-radius:var(--r);color:var(--red3);font-size:13px;margin-bottom:12px"></div>
+    <button class="btn btn-lg" style="width:100%;background:var(--red);color:white" onclick="doRetrait()">✅ Confirmer le retrait</button>
+  </div>
+</div>
+
+<!-- MODAL FICHE ÉLÈVE -->
+<div class="modal-bg" id="modal-eleve">
+  <div class="modal" style="width:520px">
+    <button class="modal-close" onclick="closeModal('eleve')">✕</button>
+    <div class="modal-title" id="modal-eleve-title">Fiche élève</div>
+    <div id="modal-eleve-content"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+/* ══════════════ FIREBASE INIT ══════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBuUKiJM6P5yMYnRFRkK0vlTz0Kbsa2UHY",
+  authDomain: "lm-scndv.firebaseapp.com",
+  projectId: "lm-scndv",
+  storageBucket: "lm-scndv.firebasestorage.app",
+  messagingSenderId: "744323296881",
+  appId: "1:744323296881:web:9e8b78c9408ddf79eff5d0"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ══════════════ PASSWORD SYSTEM ══════════════
+   Le mot de passe est stocké dans Firestore : config/auth
+   Hash SHA-256 côté client pour ne jamais stocker en clair.
+═══════════════════════════════════════════════ */
+const DEFAULT_PWD = 'lmsv2025'; // Mot de passe par défaut au 1er lancement
+
+async function hashPwd(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkLogin(pwd){
+  const ref = doc(db,'config','auth');
+  const snap = await getDoc(ref);
+  if(!snap.exists()){
+    // First time: create default password hash
+    const h = await hashPwd(DEFAULT_PWD);
+    await setDoc(ref,{hash:h});
+    return (await hashPwd(pwd)) === h;
+  }
+  const stored = snap.data().hash;
+  const entered = await hashPwd(pwd);
+  return entered === stored;
+}
+
+async function updatePwd(newPwd){
+  const h = await hashPwd(newPwd);
+  await setDoc(doc(db,'config','auth'),{hash:h});
+}
+
+/* ══════════════ SESSION ══════════════ */
+function isLoggedIn(){ return sessionStorage.getItem('lmsv_auth')==='1'; }
+function setLoggedIn(){ sessionStorage.setItem('lmsv_auth','1'); }
+function clearSession(){ sessionStorage.removeItem('lmsv_auth'); }
+
+/* ══════════════ DOM REFS ══════════════ */
+const loginScreen = document.getElementById('login-screen');
+const loadingOverlay = document.getElementById('loading-overlay');
+const mainApp = document.getElementById('main-app');
+
+/* ══════════════ IN-MEMORY CACHE ══════════════ */
+let ELEVES = [];   // [{id, prenom, nom, classe, email, points, depots, createdAt}]
+let HISTO = [];    // [{id, eleveId, type, catId, pts, desc, date}]
+let CONFIG = {
+  nom:'LM Seconde Vie', ecole:'Lycée Louise Michel, Narbonne',
+  email:'recyclerie@lm-narbonne.fr', minPts:0,
+  multTbe:1.0, multBe:0.75, multUse:0.5
+};
+let CATEGORIES = [
+  {id:'manteau',nom:'Manteau / veste',emoji:'🧥'},
+  {id:'haut',nom:'Haut (t-shirt, pull)',emoji:'👕'},
+  {id:'bas',nom:'Bas (pantalon, jupe)',emoji:'👖'},
+  {id:'chaussures',nom:'Chaussures',emoji:'👟'},
+  {id:'accessoire',nom:'Accessoire / sac',emoji:'🎒'},
+  {id:'livre',nom:'Livre / manuel',emoji:'📚'},
+  {id:'jeu',nom:'Jeu / jouet',emoji:'🎮'},
+  {id:'autre',nom:'Autre objet',emoji:'📦'},
+];
+let BAREMES = {
+  depot:{
+    manteau:{tbe:40,be:30,use:20},haut:{tbe:20,be:15,use:10},
+    bas:{tbe:25,be:18,use:12},chaussures:{tbe:30,be:20,use:14},
+    accessoire:{tbe:15,be:10,use:7},livre:{tbe:15,be:10,use:8},
+    jeu:{tbe:20,be:12,use:8},autre:{tbe:10,be:7,use:5}
+  },
+  retrait:{manteau:70,haut:35,bas:40,chaussures:50,accessoire:25,livre:20,jeu:30,autre:15}
+};
+let counter = 1;
+
+/* ══════════════ SYNC INDICATOR ══════════════ */
+function setSyncing(){ document.getElementById('sync-dot').className='sync-dot syncing'; document.getElementById('sync-label').textContent='Synchronisation…'; }
+function setSynced(){ document.getElementById('sync-dot').className='sync-dot'; document.getElementById('sync-label').textContent='Synchronisé'; }
+function setOffline(){ document.getElementById('sync-dot').className='sync-dot offline'; document.getElementById('sync-label').textContent='Hors ligne'; }
+
+/* ══════════════ FIRESTORE LOAD ══════════════ */
+async function loadAll(){
+  try {
+    // Config
+    const cfgSnap = await getDoc(doc(db,'config','main'));
+    if(cfgSnap.exists()){ const d=cfgSnap.data(); CONFIG=d.config||CONFIG; CATEGORIES=d.categories||CATEGORIES; BAREMES=d.baremes||BAREMES; counter=d.counter||1; }
+
+    // Élèves
+    const elevesSnap = await getDocs(collection(db,'eleves'));
+    ELEVES = elevesSnap.docs.map(d=>({id:d.id,...d.data()}));
+
+    // Historique (last 500)
+    const histoSnap = await getDocs(query(collection(db,'historique'),orderBy('date','desc'),limit(500)));
+    HISTO = histoSnap.docs.map(d=>({id:d.id,...d.data()}));
+
+    setSynced();
+  } catch(e){
+    console.error(e);
+    setOffline();
+    toast('Erreur de connexion Firebase','⚠️');
+  }
+}
+
+async function saveConfig(){
+  setSyncing();
+  try {
+    CONFIG.nom = document.getElementById('cfg-nom').value.trim();
+    CONFIG.ecole = document.getElementById('cfg-ecole').value.trim();
+    CONFIG.email = document.getElementById('cfg-email').value.trim();
+    CONFIG.minPts = Number(document.getElementById('cfg-min-pts').value);
+    CONFIG.multTbe = Number(document.getElementById('cfg-mult-tbe').value);
+    CONFIG.multBe = Number(document.getElementById('cfg-mult-be').value);
+    CONFIG.multUse = Number(document.getElementById('cfg-mult-use').value);
+    await setDoc(doc(db,'config','main'),{config:CONFIG,categories:CATEGORIES,baremes:BAREMES,counter});
+    setSynced();
+    toast('Réglages sauvegardés ✅');
+  } catch(e){ setOffline(); toast('Erreur sauvegarde','❌'); }
+}
+
+async function saveConfigSilent(){
+  try { await setDoc(doc(db,'config','main'),{config:CONFIG,categories:CATEGORIES,baremes:BAREMES,counter}); setSynced(); }
+  catch(e){ setOffline(); }
+}
+
+/* ══════════════ HELPERS ══════════════ */
+function genId(){ const id='LM-'+new Date().getFullYear()+'-'+String(counter).padStart(4,'0'); counter++; return id; }
+function initials(e){ return ((e.prenom||'?')[0]+(e.nom||'?')[0]).toUpperCase(); }
+function ts(){ return new Date().toISOString(); }
+function fmtDate(iso){ const d=new Date(iso); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+function fmtShort(iso){ const d=new Date(iso); return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+function getCat(id){ return CATEGORIES.find(c=>c.id===id)||{nom:id,emoji:'📦'}; }
+function getPtsDepot(catId,etat){ const b=BAREMES.depot[catId]; if(!b) return 10; return b[etat]||b.tbe||10; }
+function getPtsRetrait(catId){ return BAREMES.retrait[catId]||20; }
+
+function av(e,size=42){
+  const cols=[['#FADBD8','#922B21'],['#EAF5EE','#1E7A40'],['#E6F1FB','#0C447C'],['#FAEEDA','#633806'],['#FBEAF0','#4B1528'],['#F1EFE8','#555']];
+  const c=cols[Math.abs([...(e.id||'')].reduce((a,c)=>a+c.charCodeAt(0),0))%cols.length];
+  return `<div class="av" style="width:${size}px;height:${size}px;background:${c[0]};color:${c[1]};font-size:${size*.35}px">${initials(e)}</div>`;
+}
+
+/* ══════════════ TOAST ══════════════ */
+function toast(msg,icon='✅'){
+  const c=document.getElementById('toasts');
+  const el=document.createElement('div');
+  el.className='toast';
+  el.innerHTML=`<span class="toast-icon">${icon}</span>${msg}`;
+  c.appendChild(el);
+  setTimeout(()=>el.classList.add('show'),10);
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),400)},3500);
+}
+
+/* ══════════════ MODAL ══════════════ */
+function openModal(id){ document.getElementById('modal-'+id).classList.add('open'); }
+function closeModal(id){ document.getElementById('modal-'+id).classList.remove('open'); }
+
+/* ══════════════ NAVIGATION ══════════════ */
+const pageTitles={accueil:'Tableau de bord',scanner:'Scanner une carte',depot:'Dépôt & Inscription',eleves:'Élèves inscrits',baremes:'Barèmes de points',historique:'Historique',reglages:'Réglages'};
+function nav(page,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('topbar-title').textContent=pageTitles[page]||page;
+  if(page==='accueil') renderDashboard();
+  if(page==='eleves') renderEleves();
+  if(page==='historique') renderHistorique();
+  if(page==='baremes') renderBaremes();
+  if(page==='depot') fillDepotSelect();
+  if(page==='reglages') fillReglages();
+}
+
+/* ══════════════ LOGIN / LOGOUT ══════════════ */
+async function doLogin(){
+  const pwd = document.getElementById('login-pwd').value;
+  const err = document.getElementById('login-err');
+  const spin = document.getElementById('login-spinner');
+  err.textContent='';
+  if(!pwd){ err.textContent='Saisissez le mot de passe.'; return; }
+  spin.style.display='block';
+  try {
+    const ok = await checkLogin(pwd);
+    if(ok){
+      setLoggedIn();
+      loginScreen.classList.add('hidden');
+      loadingOverlay.style.display='flex';
+      await loadAll();
+      loadingOverlay.classList.add('hidden');
+      mainApp.style.display='flex';
+      renderDashboard();
+      fillDepotSelect();
+    } else {
+      err.textContent='Mot de passe incorrect.';
+      document.getElementById('login-pwd').value='';
+    }
+  } catch(e){
+    err.textContent='Erreur de connexion. Vérifiez votre internet.';
+  }
+  spin.style.display='none';
+}
+
+function doLogout(){
+  clearSession();
+  if(camOn) stopCam();
+  mainApp.style.display='none';
+  loginScreen.classList.remove('hidden');
+  document.getElementById('login-pwd').value='';
+  document.getElementById('login-err').textContent='';
+}
+
+async function changePwd(){
+  const np = document.getElementById('cfg-pwd-new').value;
+  if(!np||np.length<6){ toast('Minimum 6 caractères','⚠️'); return; }
+  setSyncing();
+  try {
+    await updatePwd(np);
+    document.getElementById('cfg-pwd-new').value='';
+    setSynced();
+    toast('Mot de passe changé ✅');
+  } catch(e){ toast('Erreur changement de mot de passe','❌'); }
+}
+
+/* ══════════════ DASHBOARD ══════════════ */
+function renderDashboard(){
+  const totalDepots=HISTO.filter(x=>x.type==='depot').length;
+  const totalCredits=HISTO.reduce((a,x)=>x.pts>0?a+x.pts:a,0);
+  const totalDepenses=HISTO.reduce((a,x)=>x.pts<0?a+Math.abs(x.pts):a,0);
+  document.getElementById('s-eleves').textContent=ELEVES.length;
+  document.getElementById('s-articles').textContent=totalDepots;
+  document.getElementById('s-credits').textContent=totalCredits;
+  document.getElementById('s-depenses').textContent=totalDepenses;
+  document.getElementById('tb-total-eleves').textContent=ELEVES.length;
+  document.getElementById('tb-total-pts').textContent=totalCredits;
+  const recent=[...HISTO].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+  const rDiv=document.getElementById('recent-list');
+  rDiv.innerHTML=recent.length?recent.map(item=>{
+    const el=ELEVES.find(x=>x.id===item.eleveId)||{prenom:'?',nom:'',id:'?'};
+    const isPlus=item.pts>0;
+    return `<div class="histo"><div class="histo-icon ${isPlus?'plus':'minus'}">${isPlus?'📥':'📤'}</div><div class="histo-info"><div class="histo-name">${el.prenom} ${el.nom}</div><div class="histo-sub">${item.desc} · ${fmtShort(item.date)}</div></div><div class="histo-pts ${isPlus?'plus':'minus'}">${isPlus?'+':''}${item.pts} pts</div></div>`;
+  }).join(''):'<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Aucune activité</div></div>';
+  const top=[...ELEVES].sort((a,b)=>b.points-a.points).slice(0,5);
+  document.getElementById('top-eleves').innerHTML=top.length?top.map((el,i)=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-family:var(--ff-display);font-size:16px;font-weight:900;color:var(--gray);min-width:20px;text-align:center">${i+1}</div>
+      ${av(el,36)}<div style="flex:1"><div style="font-size:14px;font-weight:500">${el.prenom} ${el.nom}</div><div style="font-size:12px;color:var(--gray)">${el.classe}</div></div>
+      <div class="pts-pill">${el.points} pts</div>
+    </div>`).join(''):'<div class="empty"><div class="empty-icon">🏆</div><div class="empty-text">Aucun élève</div></div>';
+}
+
+/* ══════════════ CRÉER ÉLÈVE ══════════════ */
+async function creerEleve(){
+  const prenom=document.getElementById('nv-prenom').value.trim();
+  const nom=document.getElementById('nv-nom').value.trim();
+  const classe=document.getElementById('nv-classe').value.trim();
+  const email=document.getElementById('nv-email').value.trim();
+  if(!prenom||!nom){ toast('Prénom et nom requis','⚠️'); return; }
+  setSyncing();
+  const id=genId();
+  const eleve={id,prenom,nom,classe,email,points:0,depots:0,createdAt:ts()};
+  try {
+    await setDoc(doc(db,'eleves',id),eleve);
+    ELEVES.push(eleve);
+    await saveConfigSilent();
+    setSynced();
+    document.getElementById('nv-result').innerHTML=`<div style="background:var(--light);border-radius:var(--r2);padding:16px;border:1px solid var(--border)"><div style="font-size:12px;color:var(--gray);margin-bottom:6px">Élève créé ✅</div><div style="font-family:var(--ff-display);font-size:18px;font-weight:700">${prenom} ${nom}</div><div style="font-size:12px;color:var(--gray);margin-top:2px">${classe} · <strong style="color:var(--red)">${id}</strong></div></div>`;
+    ['nv-prenom','nv-nom','nv-classe','nv-email'].forEach(i=>document.getElementById(i).value='');
+    fillDepotSelect();
+    toast(`Carte créée pour ${prenom} ${nom} !`);
+  } catch(e){ setOffline(); toast('Erreur Firestore','❌'); }
+}
+
+/* ══════════════ DÉPÔT ══════════════ */
+let depotEtat='tbe';
+function setEtat(e,btn){ depotEtat=e; document.querySelectorAll('#depot-etat-group .radio-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); updateDepotPts(); }
+
+function fillDepotSelect(){
+  const sel=document.getElementById('depot-eleve');
+  sel.innerHTML='<option value="">Sélectionner un élève...</option>'+[...ELEVES].sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom)).map(e=>`<option value="${e.id}">${e.prenom} ${e.nom} — ${e.classe}</option>`).join('');
+  fillCatSelect('depot-cat');
+}
+
+function fillCatSelect(selId){
+  const sel=document.getElementById(selId);
+  if(!sel) return;
+  sel.innerHTML='<option value="">Catégorie...</option>'+CATEGORIES.map(c=>`<option value="${c.id}">${c.emoji} ${c.nom}</option>`).join('');
+}
+
+function updateDepotPts(){
+  const cat=document.getElementById('depot-cat').value;
+  const prev=document.getElementById('depot-preview');
+  if(!cat){ prev.style.display='none'; return; }
+  const pts=getPtsDepot(cat,depotEtat);
+  const catObj=getCat(cat);
+  prev.style.display='flex';
+  document.getElementById('depot-preview-pts').textContent=pts;
+  document.getElementById('depot-preview-cat').textContent=catObj.emoji+' '+catObj.nom+' · État : '+{tbe:'TBE',be:'Bon état',use:'Usé'}[depotEtat];
+}
+
+async function validerDepot(){
+  const eleveId=document.getElementById('depot-eleve').value;
+  const catId=document.getElementById('depot-cat').value;
+  const desc=document.getElementById('depot-desc').value.trim();
+  if(!eleveId){ toast('Sélectionnez un élève','⚠️'); return; }
+  if(!catId){ toast('Sélectionnez une catégorie','⚠️'); return; }
+  const pts=getPtsDepot(catId,depotEtat);
+  const eleve=ELEVES.find(e=>e.id===eleveId);
+  const cat=getCat(catId);
+  setSyncing();
+  try {
+    eleve.points+=pts;
+    eleve.depots++;
+    await updateDoc(doc(db,'eleves',eleveId),{points:eleve.points,depots:eleve.depots});
+    const hItem={eleveId,type:'depot',catId,pts,etat:depotEtat,desc:desc||(cat.emoji+' '+cat.nom),date:ts()};
+    const ref=await addDoc(collection(db,'historique'),hItem);
+    HISTO.unshift({id:ref.id,...hItem});
+    setSynced();
+    toast(`+${pts} pts crédités à ${eleve.prenom} ${eleve.nom} ! 🎉`);
+    document.getElementById('depot-eleve').value='';
+    document.getElementById('depot-cat').value='';
+    document.getElementById('depot-desc').value='';
+    document.getElementById('depot-preview').style.display='none';
+    depotEtat='tbe';
+    document.querySelectorAll('#depot-etat-group .radio-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  } catch(e){ eleve.points-=pts; eleve.depots--; setOffline(); toast('Erreur Firestore','❌'); }
+}
+
+/* ══════════════ SCANNER ══════════════ */
+let scanner=null, camOn=false, currentEleveId=null;
+
+function toggleCam(){ if(!camOn) startCam(); else stopCam(); }
+
+function startCam(){
+  const btn=document.getElementById('btn-cam');
+  document.getElementById('qr-scan-status').textContent='Initialisation...';
+  if(scanner){ scanner.clear().catch(()=>{}); scanner=null; }
+  scanner=new Html5QrcodeScanner('qr-reader',{fps:10,qrbox:{width:240,height:240},aspectRatio:1.0},{});
+  scanner.render(result=>onScanSuccess(result),()=>{});
+  camOn=true;
+  btn.textContent='⏹ Arrêter la caméra';
+  document.getElementById('qr-scan-status').textContent='Pointez la caméra sur le QR code ou code barre';
+}
+
+function stopCam(){
+  if(scanner){ scanner.clear().catch(()=>{}); scanner=null; }
+  camOn=false;
+  const btn=document.getElementById('btn-cam');
+  if(btn){ btn.textContent='📷 Activer la caméra'; }
+  const st=document.getElementById('qr-scan-status');
+  if(st) st.textContent='Caméra arrêtée';
+}
+
+function onScanSuccess(result){
+  stopCam();
+  const eleve=ELEVES.find(e=>e.id===result);
+  if(eleve){ showElevePanel(eleve); toast(`Carte trouvée : ${eleve.prenom} ${eleve.nom}`,'📷'); }
+  else { toast('QR code non reconnu','⚠️'); }
+}
+
+function manualSearch(){
+  const q=document.getElementById('scan-manual').value.trim().toLowerCase();
+  if(!q){ toast('Saisissez un nom ou ID','⚠️'); return; }
+  const results=ELEVES.filter(e=>e.prenom.toLowerCase().includes(q)||e.nom.toLowerCase().includes(q)||e.id.toLowerCase().includes(q));
+  const div=document.getElementById('search-results');
+  if(!results.length){ div.innerHTML='<div style="font-size:13px;color:var(--gray);text-align:center;padding:12px">Aucun élève trouvé</div>'; return; }
+  div.innerHTML=results.map(e=>`
+    <div onclick="window.showElevePanelGlobal('${e.id}')" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--r);cursor:pointer;transition:background .15s;margin-bottom:4px" onmouseover="this.style.background='var(--light)'" onmouseout="this.style.background=''">
+      ${av(e,38)}<div style="flex:1"><div style="font-size:14px;font-weight:500">${e.prenom} ${e.nom}</div><div style="font-size:12px;color:var(--gray)">${e.classe} · ${e.id}</div></div>
+      <div class="pts-pill">${e.points} pts</div>
+    </div>`).join('');
+}
+
+window.showElevePanelGlobal = id => { const e=ELEVES.find(x=>x.id===id); if(e) showElevePanel(e); };
+
+function showElevePanel(eleve){
+  currentEleveId=eleve.id;
+  document.getElementById('scan-empty-panel').style.display='none';
+  document.getElementById('scan-result-panel').style.display='block';
+  document.getElementById('search-results').innerHTML='';
+  document.getElementById('scan-manual').value='';
+  renderVcard(eleve,'found-vcard');
+}
+
+/* ══════════════ VIRTUAL CARD ══════════════ */
+function renderVcard(eleve,containerId){
+  const el=document.getElementById(containerId);
+  el.innerHTML=`
+    <div class="vcard">
+      <div class="vcard-stripe"></div>
+      <div class="vcard-top">
+        <div><div class="vcard-brand-name">LM Seconde Vie</div><div class="vcard-brand-school">Lycée Louise Michel · Narbonne</div></div>
+        <div class="vcard-code-box"><div id="qr-${containerId}" style="line-height:0"></div></div>
+      </div>
+      <div class="vcard-holder">Titulaire</div>
+      <div class="vcard-name">${eleve.prenom} ${eleve.nom}</div>
+      <div class="vcard-id">${eleve.id}</div>
+      <div class="vcard-bottom">
+        <div><div class="vcard-pts-label">Points disponibles</div><div><span class="vcard-pts-val">${eleve.points}</span><span class="vcard-pts-unit">pts</span></div></div>
+        <div><div class="vcard-class">${eleve.classe||''}</div><canvas id="bc-${containerId}" style="margin-top:8px;border-radius:6px;background:rgba(255,255,255,0.9);padding:4px 6px"></canvas></div>
+      </div>
+    </div>`;
+  setTimeout(()=>{
+    const qrDiv=document.getElementById(`qr-${containerId}`);
+    if(qrDiv&&typeof QRCode!=='undefined') new QRCode(qrDiv,{text:eleve.id,width:52,height:52,colorDark:'#0D0D0D',colorLight:'transparent',correctLevel:QRCode.CorrectLevel.M});
+    const bcCanvas=document.getElementById(`bc-${containerId}`);
+    if(bcCanvas&&typeof JsBarcode!=='undefined') JsBarcode(bcCanvas,eleve.id,{format:'CODE128',width:1.5,height:28,displayValue:false,background:'transparent',lineColor:'#0D0D0D',margin:0});
+  },50);
+}
+
+/* ══════════════ CRÉDIT ══════════════ */
+let creditEtat='tbe';
+function setCreditEtat(e,btn){ creditEtat=e; document.querySelectorAll('#credit-etat-group .radio-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); updateCreditPts(); }
+
+function openCredit(){
+  const eleve=ELEVES.find(e=>e.id===currentEleveId); if(!eleve) return;
+  document.getElementById('credit-eleve-info').innerHTML=`<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--light);border-radius:var(--r)">${av(eleve,38)}<div><div style="font-weight:600">${eleve.prenom} ${eleve.nom}</div><div style="font-size:12px;color:var(--gray)">${eleve.points} pts actuels</div></div></div>`;
+  fillCatSelect('credit-cat');
+  document.getElementById('credit-pts-display').style.display='none';
+  creditEtat='tbe';
+  document.querySelectorAll('#credit-etat-group .radio-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  openModal('credit');
+}
+
+function updateCreditPts(){
+  const cat=document.getElementById('credit-cat').value;
+  const d=document.getElementById('credit-pts-display');
+  if(!cat){ d.style.display='none'; return; }
+  const pts=getPtsDepot(cat,creditEtat);
+  const catObj=getCat(cat);
+  d.style.display='flex';
+  document.getElementById('credit-pts-val').textContent=pts;
+  document.getElementById('credit-cat-label').textContent=catObj.emoji+' '+catObj.nom;
+}
+
+async function doCredit(){
+  const eleve=ELEVES.find(e=>e.id===currentEleveId);
+  const catId=document.getElementById('credit-cat').value;
+  if(!catId){ toast('Choisissez une catégorie','⚠️'); return; }
+  const pts=getPtsDepot(catId,creditEtat);
+  const cat=getCat(catId);
+  setSyncing();
+  try {
+    eleve.points+=pts; eleve.depots++;
+    await updateDoc(doc(db,'eleves',eleve.id),{points:eleve.points,depots:eleve.depots});
+    const hItem={eleveId:eleve.id,type:'depot',catId,pts,etat:creditEtat,desc:cat.emoji+' '+cat.nom,date:ts()};
+    const ref=await addDoc(collection(db,'historique'),hItem);
+    HISTO.unshift({id:ref.id,...hItem});
+    setSynced();
+    closeModal('credit');
+    renderVcard(eleve,'found-vcard');
+    toast(`+${pts} pts crédités à ${eleve.prenom} 🎉`);
+  } catch(e){ eleve.points-=pts; eleve.depots--; setOffline(); toast('Erreur Firestore','❌'); }
+}
+
+/* ══════════════ RETRAIT ══════════════ */
+function openRetrait(){
+  const eleve=ELEVES.find(e=>e.id===currentEleveId); if(!eleve) return;
+  document.getElementById('retrait-eleve-info').innerHTML=`<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--light);border-radius:var(--r)">${av(eleve,38)}<div><div style="font-weight:600">${eleve.prenom} ${eleve.nom}</div><div style="font-size:12px;color:var(--gray)">${eleve.points} pts disponibles</div></div></div>`;
+  const sel=document.getElementById('retrait-cat');
+  sel.innerHTML='<option value="">Choisir un article...</option>'+CATEGORIES.map(c=>`<option value="${c.id}">${c.emoji} ${c.nom} — ${getPtsRetrait(c.id)} pts</option>`).join('');
+  document.getElementById('retrait-warning').style.display='none';
+  openModal('retrait');
+}
+
+async function doRetrait(){
+  const eleve=ELEVES.find(e=>e.id===currentEleveId);
+  const catId=document.getElementById('retrait-cat').value;
+  if(!catId){ toast('Choisissez un article','⚠️'); return; }
+  const cost=getPtsRetrait(catId);
+  const minPts=Number(CONFIG.minPts)||0;
+  if(eleve.points-cost<minPts){
+    const w=document.getElementById('retrait-warning');
+    w.style.display='block';
+    w.textContent=`⚠️ Solde insuffisant. Il faut ${cost} pts (solde : ${eleve.points} pts).`;
+    return;
+  }
+  const cat=getCat(catId);
+  setSyncing();
+  try {
+    eleve.points-=cost;
+    await updateDoc(doc(db,'eleves',eleve.id),{points:eleve.points});
+    const hItem={eleveId:eleve.id,type:'retrait',catId,pts:-cost,desc:cat.emoji+' '+cat.nom,date:ts()};
+    const ref=await addDoc(collection(db,'historique'),hItem);
+    HISTO.unshift({id:ref.id,...hItem});
+    setSynced();
+    closeModal('retrait');
+    renderVcard(eleve,'found-vcard');
+    toast(`Retrait validé — −${cost} pts à ${eleve.prenom}`,'🛍️');
+  } catch(e){ eleve.points+=cost; setOffline(); toast('Erreur Firestore','❌'); }
+}
+
+/* ══════════════ SHARE ══════════════ */
+function shareCard(method){
+  const eleve=ELEVES.find(e=>e.id===currentEleveId); if(!eleve) return;
+  if(method==='email'){
+    window.open(`mailto:${eleve.email}?subject=Ta carte LM Seconde Vie&body=Bonjour ${eleve.prenom},%0A%0AVoici ta carte recyclerie :%0AID : ${eleve.id}%0APoints : ${eleve.points} pts%0A%0AScanne ton QR code à la recyclerie !%0AL'équipe LM Seconde Vie`);
+    toast('Email ouvert !','📧');
+  } else if(method==='sms'){
+    window.open(`sms:?body=LM Seconde Vie - Carte ${eleve.id} - ${eleve.prenom} ${eleve.nom} - ${eleve.points} pts`);
+    toast('SMS préparé !','💬');
+  } else { window.print(); toast('Impression lancée !','🖨️'); }
+}
+
+/* ══════════════ ÉLÈVES ══════════════ */
+function renderEleves(){
+  const q=document.getElementById('search-eleves').value.trim().toLowerCase();
+  let list=[...ELEVES].sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom));
+  if(q) list=list.filter(e=>e.prenom.toLowerCase().includes(q)||e.nom.toLowerCase().includes(q)||e.classe.toLowerCase().includes(q)||e.id.toLowerCase().includes(q));
+  const tbody=document.getElementById('eleves-tbody');
+  if(!list.length){ tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><div class="empty-icon">👤</div><div class="empty-text">Aucun élève trouvé</div></div></td></tr>`; return; }
+  tbody.innerHTML=list.map(e=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:10px">${av(e,36)}<div><div style="font-weight:500;font-size:14px">${e.prenom} ${e.nom}</div><div style="font-size:11px;color:var(--gray)">${e.email||''}</div></div></div></td>
+      <td><span class="badge badge-gray">${e.classe||'—'}</span></td>
+      <td><span style="font-family:monospace;font-size:12px;color:var(--gray2)">${e.id}</span></td>
+      <td><span class="pts-pill">${e.points} pts</span></td>
+      <td><span style="font-size:13px;color:var(--gray)">${e.depots} dépôt${e.depots>1?'s':''}</span></td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="window.openEleveModal('${e.id}')">Fiche</button>
+        <button class="btn btn-sm" style="background:var(--red-mid);color:var(--red3)" onclick="window.deleteEleve('${e.id}')">Suppr.</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+window.openEleveModal = id => {
+  const eleve=ELEVES.find(e=>e.id===id); if(!eleve) return;
+  document.getElementById('modal-eleve-title').textContent=`${eleve.prenom} ${eleve.nom}`;
+  const history=HISTO.filter(h=>h.eleveId===id).slice(0,10);
+  document.getElementById('modal-eleve-content').innerHTML=`
+    <div style="margin-bottom:20px" id="modal-vcard-${id}"></div>
+    <div class="grid-2" style="gap:10px;margin-bottom:16px">
+      <div style="padding:12px;background:var(--light);border-radius:var(--r)"><div style="font-size:11px;color:var(--gray);margin-bottom:2px">CLASSE</div><div style="font-weight:600">${eleve.classe||'—'}</div></div>
+      <div style="padding:12px;background:var(--light);border-radius:var(--r)"><div style="font-size:11px;color:var(--gray);margin-bottom:2px">EMAIL</div><div style="font-weight:600;font-size:13px">${eleve.email||'—'}</div></div>
+    </div>
+    <div class="sect">Dernières transactions</div>
+    ${history.length?history.map(h=>`<div class="histo"><div class="histo-icon ${h.pts>0?'plus':'minus'}">${h.pts>0?'📥':'📤'}</div><div class="histo-info"><div class="histo-name">${h.desc}</div><div class="histo-sub">${fmtDate(h.date)}</div></div><div class="histo-pts ${h.pts>0?'plus':'minus'}">${h.pts>0?'+':''}${h.pts} pts</div></div>`).join(''):'<div style="color:var(--gray);font-size:13px">Aucune transaction</div>'}
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-red" style="flex:1" onclick="closeModal('eleve');window.showElevePanelGlobal('${id}');nav('scanner',document.querySelectorAll('.nav-item')[1])">Scanner / Créditer</button>
+    </div>`;
+  openModal('eleve');
+  setTimeout(()=>renderVcard(eleve,`modal-vcard-${id}`),50);
+};
+
+window.deleteEleve = async id => {
+  if(!confirm('Supprimer cet élève définitivement ?')) return;
+  setSyncing();
+  try {
+    await deleteDoc(doc(db,'eleves',id));
+    ELEVES=ELEVES.filter(e=>e.id!==id);
+    setSynced();
+    renderEleves();
+    toast('Élève supprimé','🗑️');
+  } catch(e){ setOffline(); toast('Erreur Firestore','❌'); }
+};
+
+/* ══════════════ HISTORIQUE ══════════════ */
+function renderHistorique(){
+  const q=document.getElementById('search-histo').value.trim().toLowerCase();
+  const filter=document.getElementById('filter-histo').value;
+  let list=[...HISTO].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(filter!=='all') list=list.filter(h=>h.type===filter);
+  if(q) list=list.filter(h=>{ const el=ELEVES.find(e=>e.id===h.eleveId); return (el&&(el.prenom+' '+el.nom).toLowerCase().includes(q))||h.desc.toLowerCase().includes(q); });
+  const tbody=document.getElementById('histo-tbody');
+  const typeLabels={depot:'Dépôt',retrait:'Retrait'};
+  const typeBadge={depot:'badge-green',retrait:'badge-red'};
+  tbody.innerHTML=list.length?list.map(h=>{
+    const el=ELEVES.find(e=>e.id===h.eleveId)||{prenom:'?',nom:''};
+    return `<tr>
+      <td style="font-size:12.5px;color:var(--gray)">${fmtDate(h.date)}</td>
+      <td><div style="font-size:13.5px;font-weight:500">${el.prenom} ${el.nom}</div></td>
+      <td><span class="badge ${typeBadge[h.type]||'badge-gray'}">${typeLabels[h.type]||h.type}</span></td>
+      <td style="font-size:13.5px">${h.desc}</td>
+      <td><span style="font-family:var(--ff-display);font-weight:700;font-size:15px;color:${h.pts>0?'#1E7A40':'var(--red)'}">${h.pts>0?'+':''}${h.pts} pts</span></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="5"><div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Aucune transaction</div></div></td></tr>`;
+}
+
+/* ══════════════ BARÈMES ══════════════ */
+function renderBaremes(){ renderBaremeDepot(); renderBaremeRetrait(); renderCatsList(); }
+
+function renderBaremeDepot(){
+  document.getElementById('bareme-depot-container').innerHTML=`
+    <div class="bareme-row bareme-row-header"><span>Article</span><span>TBE</span><span>Bon état</span><span>Usé</span></div>`+
+    CATEGORIES.map(c=>{ const b=BAREMES.depot[c.id]||{tbe:10,be:7,use:5};
+      return `<div class="bareme-row"><div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500">${c.emoji} ${c.nom}</div>
+        <input class="pts-input" type="number" min="0" value="${b.tbe}" onchange="setBaremeD('${c.id}','tbe',this.value)">
+        <input class="pts-input" type="number" min="0" value="${b.be}" onchange="setBaremeD('${c.id}','be',this.value)">
+        <input class="pts-input" type="number" min="0" value="${b.use}" onchange="setBaremeD('${c.id}','use',this.value)">
+      </div>`;}).join('');
+}
+
+function renderBaremeRetrait(){
+  document.getElementById('bareme-retrait-container').innerHTML=`
+    <div class="bareme-row bareme-row-header"><span>Article</span><span></span><span></span><span style="color:var(--red)">Coût</span></div>`+
+    CATEGORIES.map(c=>{ const cost=BAREMES.retrait[c.id]||20;
+      return `<div class="bareme-row"><div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500">${c.emoji} ${c.nom}</div>
+        <span></span><span></span>
+        <input class="pts-input pts-cost" type="number" min="0" value="${cost}" onchange="setBaremeR('${c.id}',this.value)">
+      </div>`;}).join('');
+}
+
+function renderCatsList(){
+  document.getElementById('cats-list').innerHTML=CATEGORIES.map(c=>`
+    <div style="display:flex;align-items:center;gap:6px;background:var(--light);border:1px solid var(--border2);border-radius:var(--r);padding:6px 12px">
+      <span>${c.emoji}</span><span style="font-size:13px;font-weight:500">${c.nom}</span>
+      <button onclick="window.removeCat('${c.id}')" style="background:none;border:none;cursor:pointer;color:var(--gray);font-size:16px;line-height:1;margin-left:4px">×</button>
+    </div>`).join('');
+}
+
+function setBaremeD(catId,etat,val){ if(!BAREMES.depot[catId]) BAREMES.depot[catId]={tbe:10,be:7,use:5}; BAREMES.depot[catId][etat]=Number(val); }
+function setBaremeR(catId,val){ BAREMES.retrait[catId]=Number(val); }
+
+async function saveBaremes(){
+  setSyncing();
+  try { await saveConfigSilent(); setSynced(); toast('Barèmes sauvegardés ✅'); }
+  catch(e){ setOffline(); toast('Erreur sauvegarde','❌'); }
+}
+
+async function addCategory(){
+  const name=document.getElementById('new-cat-name').value.trim();
+  if(!name){ toast('Saisissez un nom','⚠️'); return; }
+  const id=name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  if(CATEGORIES.find(c=>c.id===id)){ toast('Catégorie existante','⚠️'); return; }
+  CATEGORIES.push({id,nom:name,emoji:'📦'});
+  BAREMES.depot[id]={tbe:10,be:7,use:5};
+  BAREMES.retrait[id]=20;
+  await saveConfigSilent();
+  document.getElementById('new-cat-name').value='';
+  renderBaremes();
+  toast('Catégorie ajoutée !');
+}
+
+window.removeCat = async id => {
+  if(!confirm('Supprimer cette catégorie ?')) return;
+  CATEGORIES=CATEGORIES.filter(c=>c.id!==id);
+  await saveConfigSilent();
+  renderBaremes();
+  toast('Catégorie supprimée','🗑️');
+};
+
+/* ══════════════ RÉGLAGES ══════════════ */
+function fillReglages(){
+  document.getElementById('cfg-nom').value=CONFIG.nom||'LM Seconde Vie';
+  document.getElementById('cfg-ecole').value=CONFIG.ecole||'';
+  document.getElementById('cfg-email').value=CONFIG.email||'';
+  document.getElementById('cfg-min-pts').value=CONFIG.minPts||0;
+  document.getElementById('cfg-mult-tbe').value=CONFIG.multTbe||1.0;
+  document.getElementById('cfg-mult-be').value=CONFIG.multBe||0.75;
+  document.getElementById('cfg-mult-use').value=CONFIG.multUse||0.5;
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify({eleves:ELEVES,historique:HISTO,config:CONFIG,categories:CATEGORIES,baremes:BAREMES},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='lm-seconde-vie-export-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  toast('Export téléchargé !','📥');
+}
+
+async function resetAll(){
+  if(!confirm('⚠️ Supprimer TOUTES les données ? Irréversible.')) return;
+  if(!confirm('Dernière confirmation ?')) return;
+  setSyncing();
+  try {
+    const batch=writeBatch(db);
+    ELEVES.forEach(e=>batch.delete(doc(db,'eleves',e.id)));
+    HISTO.forEach(h=>batch.delete(doc(db,'historique',h.id)));
+    await batch.commit();
+    ELEVES=[]; HISTO=[];
+    renderDashboard();
+    setSynced();
+    toast('Données réinitialisées','🗑️');
+  } catch(e){ setOffline(); toast('Erreur lors de la réinitialisation','❌'); }
+}
+
+/* ══════════════ EXPOSE GLOBALS ══════════════ */
+window.nav=nav; window.toggleCam=toggleCam; window.manualSearch=manualSearch;
+window.openCredit=openCredit; window.openRetrait=openRetrait; window.shareCard=shareCard;
+window.renderEleves=renderEleves; window.renderHistorique=renderHistorique;
+window.renderBaremes=renderBaremes; window.renderBaremeDepot=renderBaremeDepot;
+window.setBaremeD=setBaremeD; window.setBaremeR=setBaremeR; window.saveBaremes=saveBaremes;
+window.addCategory=addCategory; window.fillReglages=fillReglages;
+window.saveConfig=saveConfig; window.exportData=exportData; window.resetAll=resetAll;
+window.doCredit=doCredit; window.doRetrait=doRetrait;
+window.closeModal=closeModal; window.openModal=openModal;
+window.updateDepotPts=updateDepotPts; window.updateCreditPts=updateCreditPts;
+window.creerEleve=creerEleve; window.validerDepot=validerDepot;
+window.setEtat=setEtat; window.setCreditEtat=setCreditEtat;
+window.changePwd=changePwd; window.doLogout=doLogout;
+
+/* ══════════════ BOOT ══════════════ */
+loadingOverlay.classList.add('hidden'); // hide loading until login
+
+if(isLoggedIn()){
+  loginScreen.classList.add('hidden');
+  loadingOverlay.classList.remove('hidden');
+  loadingOverlay.style.display='flex';
+  loadAll().then(()=>{
+    loadingOverlay.classList.add('hidden');
+    mainApp.style.display='flex';
+    renderDashboard();
+    fillDepotSelect();
+  });
+}
+
+document.getElementById('login-pwd').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+  bg.addEventListener('click',e=>{ if(e.target===bg){ bg.classList.remove('open'); if(camOn) stopCam(); }});
+});
+
+window.doLogin=doLogin;
+</script>
+</body>
+</html>
