@@ -252,7 +252,7 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--black);min-h
 </div>
 
 <!-- LOADING -->
-<div id="loading-overlay">
+<div id="loading-overlay" style="display:none">
   <div class="spinner"></div>
   <div class="loading-text">CHARGEMENT DES DONNÉES…</div>
 </div>
@@ -573,8 +573,8 @@ body{font-family:var(--ff-body);background:var(--light);color:var(--black);min-h
 <div class="toast-container" id="toasts"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, limit, writeBatch } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
 /* ══════════════ FIREBASE INIT ══════════════ */
 const firebaseConfig = {
@@ -663,25 +663,37 @@ function setSynced(){ document.getElementById('sync-dot').className='sync-dot'; 
 function setOffline(){ document.getElementById('sync-dot').className='sync-dot offline'; document.getElementById('sync-label').textContent='Hors ligne'; }
 
 /* ══════════════ FIRESTORE LOAD ══════════════ */
+async function withTimeout(promise, ms=8000){
+  return Promise.race([
+    promise,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),ms))
+  ]);
+}
+
 async function loadAll(){
   try {
     // Config
-    const cfgSnap = await getDoc(doc(db,'config','main'));
+    const cfgSnap = await withTimeout(getDoc(doc(db,'config','main')));
     if(cfgSnap.exists()){ const d=cfgSnap.data(); CONFIG=d.config||CONFIG; CATEGORIES=d.categories||CATEGORIES; BAREMES=d.baremes||BAREMES; counter=d.counter||1; }
 
     // Élèves
-    const elevesSnap = await getDocs(collection(db,'eleves'));
+    const elevesSnap = await withTimeout(getDocs(collection(db,'eleves')));
     ELEVES = elevesSnap.docs.map(d=>({id:d.id,...d.data()}));
 
     // Historique (last 500)
-    const histoSnap = await getDocs(query(collection(db,'historique'),orderBy('date','desc'),limit(500)));
+    const histoSnap = await withTimeout(getDocs(query(collection(db,'historique'),orderBy('date','desc'),limit(500))));
     HISTO = histoSnap.docs.map(d=>({id:d.id,...d.data()}));
 
     setSynced();
   } catch(e){
-    console.error(e);
+    console.error('loadAll error:', e);
     setOffline();
-    toast('Erreur de connexion Firebase','⚠️');
+    if(e.message==='timeout'){
+      toast('Délai dépassé — mode hors ligne','⚠️');
+    } else {
+      toast('Erreur Firebase — données locales utilisées','⚠️');
+    }
+    // Don't rethrow — app still works with empty/cached data
   }
 }
 
@@ -765,21 +777,21 @@ async function doLogin(){
     const ok = await checkLogin(pwd);
     if(ok){
       setLoggedIn();
+      spin.style.display='none';
       loginScreen.classList.add('hidden');
-      loadingOverlay.style.display='flex';
-      await loadAll();
-      loadingOverlay.classList.add('hidden');
-      mainApp.style.display='flex';
-      renderDashboard();
-      fillDepotSelect();
+      await bootApp();
     } else {
       err.textContent='Mot de passe incorrect.';
       document.getElementById('login-pwd').value='';
+      spin.style.display='none';
     }
   } catch(e){
     err.textContent='Erreur de connexion. Vérifiez votre internet.';
+    spin.style.display='none';
+    // Show app anyway with empty data so user is not stuck
+    loginScreen.classList.add('hidden');
+    mainApp.style.display='flex';
   }
-  spin.style.display='none';
 }
 
 function doLogout(){
@@ -1272,18 +1284,24 @@ window.setEtat=setEtat; window.setCreditEtat=setCreditEtat;
 window.changePwd=changePwd; window.doLogout=doLogout;
 
 /* ══════════════ BOOT ══════════════ */
-loadingOverlay.classList.add('hidden'); // hide loading until login
+// Always hide loading on start
+loadingOverlay.style.display="none";
 
-if(isLoggedIn()){
-  loginScreen.classList.add('hidden');
-  loadingOverlay.classList.remove('hidden');
-  loadingOverlay.style.display='flex';
-  loadAll().then(()=>{
-    loadingOverlay.classList.add('hidden');
-    mainApp.style.display='flex';
+async function bootApp(){
+  loadingOverlay.style.display="flex";
+  try { await loadAll(); }
+  catch(e){ console.error("Boot:",e); setOffline(); }
+  finally {
+    loadingOverlay.style.display="none";
+    mainApp.style.display="flex";
     renderDashboard();
     fillDepotSelect();
-  });
+  }
+}
+
+if(isLoggedIn()){
+  loginScreen.classList.add("hidden");
+  bootApp();
 }
 
 document.getElementById('login-pwd').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
