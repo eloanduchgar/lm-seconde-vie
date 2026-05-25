@@ -528,8 +528,7 @@ const db=getFirestore(fbApp);
 const EJ_SVC='service_kilcjk5';
 const EJ_TPL='template_1ldo3dh';
 const EJ_KEY='k4I5viOv2dibCvXpt';
-let ejReady=false;
-function initEJ(){if(ejReady)return;try{emailjs.init(EJ_KEY);ejReady=true;}catch(e){console.error('EJ init:',e);}}
+// EmailJS init géré directement dans sendEmail()
 
 /* ━━ PASSWORD ━━ */
 async function hashP(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
@@ -706,32 +705,49 @@ function buildEmailHTML(el,type,pts,catDesc,cardUrl){
 /* ━━ SEND EMAIL ━━ */
 async function sendEmail(el,type,pts,catDesc){
   if(!el.email){toast('Aucun email pour cet élève','⚠️');return false;}
-  initEJ();
+  // Init EmailJS avec la clé publique
+  try{emailjs.init({publicKey:EJ_KEY});}catch(e){}
   const cardUrl=cardLink(el.id);
-  const htmlBody=buildEmailHTML(el,type,pts,catDesc,cardUrl);
   const ptsAbs=Math.abs(pts);
+  const isCredit=pts>0;
+  const typeLabels={credit:'Crédit de points',retrait:'Retrait article',bienvenue:'Bienvenue !',carte:'Ta carte recyclerie'};
   const subjects={
-    credit:`+${ptsAbs} pts crédités sur ta carte LM Seconde Vie`,
-    retrait:`Retrait validé — −${ptsAbs} pts · LM Seconde Vie`,
-    bienvenue:`Bienvenue à la recyclerie ! Ta carte ${el.id}`,
-    carte:`Ta carte LM Seconde Vie · ${el.prenom} ${el.nom}`
+    credit:`+${ptsAbs} pts crédités — LM Seconde Vie`,
+    retrait:`−${ptsAbs} pts utilisés — LM Seconde Vie`,
+    bienvenue:`Bienvenue à la recyclerie ! Carte ${el.id}`,
+    carte:`Ta carte LM Seconde Vie — ${el.prenom} ${el.nom}`
   };
+  // Paramètres simples — le template EmailJS construit le visuel
+  const params={
+    to_email: el.email,
+    to_name: `${el.prenom} ${el.nom}`,
+    from_name: 'LM Seconde Vie',
+    reply_to: CFG.email||'lm.seconde.vie.11@gmail.com',
+    subject: subjects[type]||'LM Seconde Vie',
+    prenom: el.prenom,
+    nom: el.nom,
+    card_id: el.id,
+    classe: el.classe||'',
+    solde: String(el.points),
+    pts_operation: pts>0?`+${ptsAbs}`:pts<0?`−${ptsAbs}`:'0',
+    type_operation: typeLabels[type]||type,
+    article: catDesc||'',
+    card_link: cardUrl,
+    school: CFG.ecole||'Lycée Louise Michel, Narbonne',
+    recyclerie: CFG.nom||'LM Seconde Vie',
+    contact_email: CFG.email||'lm.seconde.vie.11@gmail.com',
+    annee: new Date().getFullYear().toString()
+  };
+  console.log('[EmailJS] Envoi vers:', el.email, '| type:', type, '| params:', params);
   try{
-    await emailjs.send(EJ_SVC,EJ_TPL,{
-      to_email:el.email,
-      to_name:`${el.prenom} ${el.nom}`,
-      subject:subjects[type]||'LM Seconde Vie',
-      html_content:htmlBody,
-      card_id:el.id,
-      points:String(el.points),
-      card_link:cardUrl,
-      message:catDesc||''
-    });
+    const resp=await emailjs.send(EJ_SVC, EJ_TPL, params);
+    console.log('[EmailJS] Succès:', resp);
     toast(`📧 Email envoyé à ${el.email}`);
     return true;
   }catch(e){
-    console.error('EmailJS error:',e);
-    toast(`Erreur email : ${e.text||e.message||'vérifiez EmailJS'}`,'❌');
+    console.error('[EmailJS] Erreur complète:', JSON.stringify(e));
+    const msg=e.text||e.message||JSON.stringify(e)||'Erreur inconnue';
+    toast(`Email : ${msg}`,'❌');
     return false;
   }
 }
