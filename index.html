@@ -527,12 +527,12 @@ const db=getFirestore(fbApp);
 /* ━━ EMAILJS ━━ */
 const EJ_SVC='service_kilcjk5';
 const EJ_KEY='k4I5viOv2dibCvXpt';
-// Un template par type d'email
+// 2 templates : un pour les opérations de points, un pour la carte/bienvenue
 const EJ_TPLS={
-  credit:   'template_credit',
-  retrait:  'template_retrait',
-  bienvenue:'template_bienvenu',
-  carte:    'template_carte'
+  credit:   'template_1ldo3dh',  // template OPÉRATION (crédit + retrait)
+  retrait:  'template_1ldo3dh',  // même template, couleur différente via {{couleur}}
+  bienvenue:'template_carte_lm', // template CARTE (bienvenue + envoi carte)
+  carte:    'template_carte_lm'  // même template
 };
 // EmailJS init géré directement dans sendEmail()
 
@@ -724,6 +724,27 @@ async function sendEmail(el,type,pts,catDesc){
     carte:`Ta carte LM Seconde Vie — ${el.prenom} ${el.nom}`
   };
   // Paramètres simples — le template EmailJS construit le visuel
+  // Variables pour adapter visuellement les 2 templates
+  const isCredit=pts>0;
+  const couleurs={
+    credit:'#1E7A40',   // vert
+    retrait:'#C0392B',  // rouge
+    bienvenue:'#C0392B',
+    carte:'#C0392B'
+  };
+  const icones={credit:'📥',retrait:'📤',bienvenue:'🎉',carte:'🪪'};
+  const titres={
+    credit:`Bonne nouvelle, ${el.prenom} !`,
+    retrait:`Retrait confirmé, ${el.prenom} !`,
+    bienvenue:`Bienvenue, ${el.prenom} !`,
+    carte:`Ta carte recyclerie, ${el.prenom}`
+  };
+  const sous_titres={
+    credit:'Ton compte a été crédité',
+    retrait:'Un article a été retiré de la recyclerie',
+    bienvenue:'Ta carte LM Seconde Vie a été créée',
+    carte:'Présente cet email à la recyclerie'
+  };
   const params={
     to_email: el.email,
     to_name: `${el.prenom} ${el.nom}`,
@@ -738,7 +759,10 @@ async function sendEmail(el,type,pts,catDesc){
     pts_operation: pts>0?`+${ptsAbs}`:pts<0?`−${ptsAbs}`:'0',
     type_operation: typeLabels[type]||type,
     article: catDesc||'',
-    card_link: cardUrl,
+    couleur: couleurs[type]||'#C0392B',
+    icone: icones[type]||'📧',
+    titre: titres[type]||`Bonjour ${el.prenom}`,
+    sous_titre: sous_titres[type]||'',
     school: CFG.ecole||'Lycée Louise Michel, Narbonne',
     recyclerie: CFG.nom||'LM Seconde Vie',
     contact_email: CFG.email||'lm.seconde.vie.11@gmail.com',
