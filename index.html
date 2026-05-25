@@ -539,11 +539,21 @@ const EJ_TPLS={
 /* ━━ PASSWORD ━━ */
 async function hashP(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
 async function checkP(pwd){
+  const enteredHash=await hashP(pwd);
+  const defaultHash=await hashP('lmsv2025');
   try{
-    const r=await wt(getDoc(doc(db,'config','auth')));
-    if(!r.exists()){const h=await hashP('lmsv2025');await setDoc(doc(db,'config','auth'),{hash:h});return(await hashP(pwd))===h;}
-    return(await hashP(pwd))===r.data().hash;
-  }catch(e){console.error(e);return false;}
+    const r=await wt(getDoc(doc(db,'config','auth')),6000);
+    if(!r.exists()){
+      // Premier lancement : on crée le mdp par défaut dans Firestore
+      await setDoc(doc(db,'config','auth'),{hash:defaultHash});
+      return enteredHash===defaultHash;
+    }
+    return enteredHash===r.data().hash;
+  }catch(e){
+    // Firebase injoignable : on accepte le mdp par défaut en fallback
+    console.warn('[Auth] Firebase injoignable, fallback local. Erreur:',e.message);
+    return enteredHash===defaultHash;
+  }
 }
 async function updP(np){await setDoc(doc(db,'config','auth'),{hash:await hashP(np)});}
 
@@ -825,17 +835,33 @@ function nav(p,btn){
 async function doLogin(){
   const pwd=document.getElementById('lpwd').value.trim();
   const err=document.getElementById('lerr');
+  const btn=document.getElementById('lbtn');
+  const spin=document.getElementById('lspin');
   err.textContent='';
   if(!pwd){err.textContent='Saisissez le mot de passe.';return;}
-  document.getElementById('lbtn').disabled=true;
-  document.getElementById('lspin').style.display='block';
+  btn.disabled=true;
+  spin.style.display='block';
   try{
     const ok=await checkP(pwd);
-    if(ok){setA();document.getElementById('ls').classList.add('gone');await bootApp();}
-    else{err.textContent='Mot de passe incorrect.';document.getElementById('lpwd').value='';}
-  }catch(e){err.textContent='Erreur de connexion.';}
-  document.getElementById('lbtn').disabled=false;
-  document.getElementById('lspin').style.display='none';
+    if(ok){
+      setA();
+      spin.style.display='none';
+      btn.disabled=false;
+      document.getElementById('ls').classList.add('gone');
+      await bootApp();
+    } else {
+      err.textContent='Mot de passe incorrect. (par défaut : lmsv2025)';
+      document.getElementById('lpwd').value='';
+      document.getElementById('lpwd').focus();
+      btn.disabled=false;
+      spin.style.display='none';
+    }
+  }catch(e){
+    console.error('[doLogin] Erreur:', e);
+    err.textContent='Erreur inattendue — réessayez.';
+    btn.disabled=false;
+    spin.style.display='none';
+  }
 }
 
 function doLogout(){clrA();stopRealtime();if(camOn)stopCam();document.getElementById('app').style.display='none';document.getElementById('ls').classList.remove('gone');document.getElementById('lpwd').value='';}
