@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LM Seconde Vie</title>
+<!-- Firebase compat SDK (version classique, pas ES modules) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -516,13 +519,30 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
 
 <div class="tc" id="tc"></div>
 
-<script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-import{getFirestore,doc,getDoc,setDoc,collection,getDocs,addDoc,updateDoc,deleteDoc,query,orderBy,limit,writeBatch,onSnapshot}from"https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
-
-/* ━━ FIREBASE ━━ */
-const fbApp=initializeApp({apiKey:"AIzaSyBuUKiJM6P5yMYnRFRkK0vlTz0Kbsa2UHY",authDomain:"lm-scndv.firebaseapp.com",projectId:"lm-scndv",storageBucket:"lm-scndv.firebasestorage.app",messagingSenderId:"744323296881",appId:"1:744323296881:web:9e8b78c9408ddf79eff5d0"});
-const db=getFirestore(fbApp);
+<script>
+/* ━━ FIREBASE — chargé via compat CDN (pas de module isolé) ━━ */
+let db;
+function initFirebase(){
+  if(typeof firebase==='undefined'){setTimeout(initFirebase,100);return;}
+  firebase.initializeApp({apiKey:"AIzaSyBuUKiJM6P5yMYnRFRkK0vlTz0Kbsa2UHY",authDomain:"lm-scndv.firebaseapp.com",projectId:"lm-scndv",storageBucket:"lm-scndv.firebasestorage.app",messagingSenderId:"744323296881",appId:"1:744323296881:web:9e8b78c9408ddf79eff5d0"});
+  db=firebase.firestore();
+  console.log('[Firebase] Initialisé');
+  if(isA()) bootApp();
+}
+// Helpers Firestore compat
+const doc=(db,col,id)=>db.collection(col).doc(id);
+const getDoc=ref=>ref.get();
+const setDoc=(ref,data)=>ref.set(data);
+const updateDoc=(ref,data)=>ref.update(data);
+const deleteDoc=ref=>ref.delete();
+const addDoc=(colRef,data)=>colRef.add(data);
+const collection=(db,col)=>db.collection(col);
+const getDocs=ref=>ref.get();
+const query=(ref,...args)=>{let q=ref;args.forEach(a=>q=a(q));return q;};
+const orderBy=(f,d='asc')=>q=>q.orderBy(f,d);
+const limit=n=>q=>q.limit(n);
+const writeBatch=db=>db.batch();
+const onSnapshot=(ref,cb,err)=>ref.onSnapshot(cb,err);
 
 /* ━━ EMAILJS ━━ */
 const EJ_SVC='service_kilcjk5';
@@ -542,10 +562,10 @@ async function checkP(pwd){
   const enteredHash=await hashP(pwd);
   const defaultHash=await hashP('lmsv2025');
   try{
-    const r=await wt(getDoc(doc(db,'config','auth')),6000);
+    const r=await db.collection('config').doc('auth').get();
     if(!r.exists()){
       // Premier lancement : on crée le mdp par défaut dans Firestore
-      await setDoc(doc(db,'config','auth'),{hash:defaultHash});
+      await db.collection('config').doc('auth').set({hash:defaultHash});
       return enteredHash===defaultHash;
     }
     return enteredHash===r.data().hash;
@@ -555,7 +575,7 @@ async function checkP(pwd){
     return enteredHash===defaultHash;
   }
 }
-async function updP(np){await setDoc(doc(db,'config','auth'),{hash:await hashP(np)});}
+async function updP(np){await db.collection('config').doc('auth').set({hash:await hashP(np)});}
 
 /* ━━ SESSION ━━ */
 const isA=()=>sessionStorage.getItem('lmsv')=='1';
@@ -592,7 +612,7 @@ let unsubE=null,unsubH=null;
 function startRealtime(){
   // Écoute les élèves en temps réel
   if(unsubE)unsubE();
-  unsubE=onSnapshot(collection(db,'eleves'),(snap)=>{
+  unsubE=db.collection('eleves').onSnapshot(,(snap)=>{
     E=snap.docs.map(d=>({id:d.id,...d.data()}));
     synced();
     // Refresh current page si élèves ou accueil
@@ -612,7 +632,7 @@ function startRealtime(){
 
   // Écoute l'historique en temps réel
   if(unsubH)unsubH();
-  unsubH=onSnapshot(query(collection(db,'historique'),orderBy('date','desc'),limit(300)),(snap)=>{
+  unsubH=onSnapshot(query(db.collection('historique'),orderBy('date','desc'),limit(300)),(snap)=>{
     H=snap.docs.map(d=>({id:d.id,...d.data()}));
     const pg=document.querySelector('.page.active');
     if(pg){
@@ -630,11 +650,11 @@ function stopRealtime(){if(unsubE){unsubE();unsubE=null;}if(unsubH){unsubH();uns
 /* ━━ LOAD ━━ */
 async function loadAll(){
   try{
-    const cfg=await wt(getDoc(doc(db,'config','main')));
+    const cfg=await db.collection('config').doc('main').get());
     if(cfg.exists()){const d=cfg.data();if(d.config)CFG={...CFG,...d.config};if(d.cats)CATS=d.cats;if(d.bar)BAR=d.bar;if(d.ctr)CTR=d.ctr;}
-    const es=await wt(getDocs(collection(db,'eleves')));
+    const es=await wt(getDocs(db.collection('eleves')));
     E=es.docs.map(d=>({id:d.id,...d.data()}));
-    const hs=await wt(getDocs(query(collection(db,'historique'),orderBy('date','desc'),limit(300))));
+    const hs=await wt(getDocs(query(db.collection('historique'),orderBy('date','desc'),limit(300))));
     H=hs.docs.map(d=>({id:d.id,...d.data()}));
     synced();
     startRealtime();
@@ -642,7 +662,7 @@ async function loadAll(){
 }
 
 async function saveMain(){
-  try{syncing();await setDoc(doc(db,'config','main'),{config:CFG,cats:CATS,bar:BAR,ctr:CTR});synced();}
+  try{syncing();await db.collection('config').doc('main').set({config:CFG,cats:CATS,bar:BAR,ctr:CTR});synced();}
   catch(e){offline();}
 }
 
@@ -920,7 +940,7 @@ async function creerEleve(){
   const id=genId();
   const eleve={id,prenom,nom,classe,email,points:0,depots:0,createdAt:ts()};
   try{
-    await setDoc(doc(db,'eleves',id),eleve);
+    await setDoc(db.collection('eleves').doc(id),eleve);
     await saveMain();synced();
     document.getElementById('nv-res').innerHTML=`<div style="background:var(--lt);border-radius:var(--r2);padding:13px;border:1px solid var(--bd)"><div style="font-size:10.5px;color:var(--gr);margin-bottom:3px">Carte créée ✅</div><div style="font-family:var(--ffd);font-size:16px;font-weight:700">${prenom} ${nom}</div><div style="font-size:11.5px;color:var(--gr);margin-top:1px">${classe} · <strong style="color:var(--red)">${id}</strong></div><div style="font-size:11.5px;color:var(--gr);margin-top:4px">🔗 <a href="${cardLink(id)}" target="_blank" style="color:var(--red)">Lien carte</a></div></div>`;
     ['nv-p','nv-n','nv-c','nv-e'].forEach(i=>document.getElementById(i).value='');
@@ -958,9 +978,9 @@ async function validerDepot(){
   syncing();
   try{
     eleve.points+=pts;eleve.depots++;
-    await updateDoc(doc(db,'eleves',eId),{points:eleve.points,depots:eleve.depots});
+    await db.collection('eleves').doc(eId).update({points:eleve.points,depots:eleve.depots});
     const hItem={eleveId:eId,type:'depot',catId,pts,etat:dE,desc:desc||(cat.emoji+' '+cat.nom),date:ts()};
-    const ref=await addDoc(collection(db,'historique'),hItem);
+    const ref=await db.collection('historique').add(hItem);
     H.unshift({id:ref.id,...hItem});synced();
     toast(`🎉 +${pts} pts → ${eleve.prenom} ${eleve.nom}`);
     if(eleve.email)sendEmail(eleve,'credit',pts,desc||(cat.emoji+' '+cat.nom));
@@ -1056,9 +1076,9 @@ async function doCredit(){
   syncing();
   try{
     el.points+=pts;el.depots++;
-    await updateDoc(doc(db,'eleves',el.id),{points:el.points,depots:el.depots});
+    await db.collection('eleves').doc(el.id).update({points:el.points,depots:el.depots});
     const hItem={eleveId:el.id,type:'depot',catId,pts,etat:crE,desc:cat.emoji+' '+cat.nom,date:ts()};
-    const ref=await addDoc(collection(db,'historique'),hItem);H.unshift({id:ref.id,...hItem});
+    const ref=await db.collection('historique').add(hItem);H.unshift({id:ref.id,...hItem});
     synced();closeM('credit');renderVC(el,'found-vc');
     toast(`🎉 +${pts} pts → ${el.prenom} ${el.nom}`);
     if(el.email)sendEmail(el,'credit',pts,cat.emoji+' '+cat.nom);
@@ -1081,9 +1101,9 @@ async function doRetrait(){
   const cat=getCat(catId);syncing();
   try{
     el.points-=cost;
-    await updateDoc(doc(db,'eleves',el.id),{points:el.points});
+    await db.collection('eleves').doc(el.id).update({points:el.points});
     const hItem={eleveId:el.id,type:'retrait',catId,pts:-cost,desc:cat.emoji+' '+cat.nom,date:ts()};
-    const ref=await addDoc(collection(db,'historique'),hItem);H.unshift({id:ref.id,...hItem});
+    const ref=await db.collection('historique').add(hItem);H.unshift({id:ref.id,...hItem});
     synced();closeM('retrait');renderVC(el,'found-vc');
     toast(`🛍️ Retrait − ${cost} pts · ${el.prenom} ${el.nom}`);
     if(el.email)sendEmail(el,'retrait',-cost,cat.emoji+' '+cat.nom);
@@ -1148,7 +1168,7 @@ window._sendCarte=id=>{const el=E.find(e=>e.id===id);if(el)sendEmail(el,'carte',
 window._del=async id=>{
   if(!confirm('Supprimer cet élève ?'))return;
   syncing();
-  try{await deleteDoc(doc(db,'eleves',id));synced();toast('Élève supprimé','🗑️');}
+  try{await db.collection('eleves').doc(id).delete();synced();toast('Élève supprimé','🗑️');}
   catch(e){offline();toast('Erreur','❌');}
 };
 
@@ -1232,30 +1252,18 @@ async function resetAll(){
   if(!confirm('Dernière confirmation ?'))return;
   syncing();
   try{
-    const batch=writeBatch(db);
-    E.forEach(e=>batch.delete(doc(db,'eleves',e.id)));
-    H.forEach(h=>batch.delete(doc(db,'historique',h.id)));
+    const batch=db.batch();
+    E.forEach(e=>batch.delete(db.collection('eleves').doc(e.id)));
+    H.forEach(h=>batch.delete(db.collection('historique').doc(h.id)));
     await batch.commit();toast('Réinitialisé','🗑️');synced();
   }catch(e){offline();toast('Erreur','❌');}
 }
 
-/* ━━ GLOBALS ━━ */
-window.nav=nav;window.toggleCam=toggleCam;window.manualSearch=manualSearch;
-window.openCredit=openCredit;window.openRetrait=openRetrait;window.shareCard=shareCard;
-window.renderEleves=renderEleves;window.renderHistorique=renderHistorique;
-window.renderBaremes=renderBaremes;window.saveBaremes=saveBaremes;window.addCat=addCat;
-window.fillReg=fillReg;window.saveConfig=saveConfig;window.exportData=exportData;window.resetAll=resetAll;
-window.doCredit=doCredit;window.doRetrait=doRetrait;window.closeM=closeM;
-window.updateCrP=updateCrP;window.updateDP=updateDP;
-window.creerEleve=creerEleve;window.validerDepot=validerDepot;
-window.setEtat=setEtat;window.setCrE=setCrE;
-window.changePwd=changePwd;window.doLogout=doLogout;window.doLogin=doLogin;
-window.toggleSB=toggleSB;
-
 /* ━━ BOOT ━━ */
 document.getElementById('lpwd').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-document.querySelectorAll('.mbg').forEach(b=>{b.addEventListener('click',e=>{if(e.target===b){b.classList.remove('open');if(camOn)stopCam();}});});
-if(isA())bootApp();
+document.querySelectorAll('.mbg').forEach(b=>{b.addEventListener('click',e=>{if(e.target===b){b.classList.remove('open');if(typeof camOn!=='undefined'&&camOn)stopCam();}});});
+// Lance Firebase (le bootApp sera appelé par initFirebase si session active)
+initFirebase();
 </script>
 </body>
 </html>
