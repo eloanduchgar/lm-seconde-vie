@@ -526,8 +526,14 @@ const db=getFirestore(fbApp);
 
 /* ━━ EMAILJS ━━ */
 const EJ_SVC='service_kilcjk5';
-const EJ_TPL='template_1ldo3dh';
 const EJ_KEY='k4I5viOv2dibCvXpt';
+// Un template par type d'email
+const EJ_TPLS={
+  credit:   'template_credit',
+  retrait:  'template_retrait',
+  bienvenue:'template_bienvenu',
+  carte:    'template_carte'
+};
 // EmailJS init géré directement dans sendEmail()
 
 /* ━━ PASSWORD ━━ */
@@ -740,7 +746,9 @@ async function sendEmail(el,type,pts,catDesc){
   };
   console.log('[EmailJS] Envoi vers:', el.email, '| type:', type, '| params:', params);
   try{
-    const resp=await emailjs.send(EJ_SVC, EJ_TPL, params);
+    const tpl=EJ_TPLS[type]||EJ_TPLS.carte;
+    console.log('[EmailJS] Template utilisé:',tpl);
+    const resp=await emailjs.send(EJ_SVC, tpl, params);
     console.log('[EmailJS] Succès:', resp);
     toast(`📧 Email envoyé à ${el.email}`);
     return true;
