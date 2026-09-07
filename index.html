@@ -7,6 +7,7 @@
 <!-- Firebase compat (PAS de type=module, tout est global) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <!-- Autres libs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
@@ -204,6 +205,7 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
     <button class="lbtn" id="lbtn" onclick="doLogin()">Accéder →</button>
     <div class="lerr" id="lerr"></div>
     <div class="lspin" id="lspin">Connexion en cours…</div>
+    <div style="margin-top:12px"><a href="#" onclick="forgotPwd();return false;" style="font-size:11.5px;color:var(--gr)">Mot de passe oublié ?</a></div>
   </div>
 </div>
 
@@ -359,7 +361,7 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
       <div class="page" id="page-historique">
         <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px;flex-wrap:wrap">
           <div style="position:relative;flex:1;min-width:180px"><span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px">🔍</span><input class="inp" id="q-h" placeholder="Rechercher…" style="padding-left:36px" oninput="renderHistorique()"></div>
-          <select class="sel" id="f-h" style="width:140px" onchange="renderHistorique()"><option value="all">Tout</option><option value="depot">Dépôts</option><option value="retrait">Retraits</option></select>
+          <select class="sel" id="f-h" style="width:140px" onchange="renderHistorique()"><option value="all">Tout</option><option value="depot">Dépôts</option><option value="retrait">Retraits</option><option value="bonus">Bonus</option></select>
         </div>
         <div class="card" style="padding:0;overflow-x:auto">
           <table class="tbl"><thead><tr><th>Date</th><th>Élève</th><th>Op.</th><th>Article</th><th>Points</th></tr></thead><tbody id="h-tb"></tbody></table>
@@ -374,9 +376,10 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
         </div>
         <div class="sg"><div class="sg-h"><strong>⚙️ Règles</strong></div>
           <div class="sr"><div class="sr-l"><strong>Points minimum pour retrait</strong></div><input class="inp" id="cfg-mp" type="number" min="0" style="max-width:90px"></div>
+          <div class="sr"><div class="sr-l"><strong>🎁 Points offerts à l'inscription</strong><span>Crédités automatiquement à la création de la carte</span></div><input class="inp" id="cfg-pb" type="number" min="0" style="max-width:90px"></div>
         </div>
         <div class="sg"><div class="sg-h"><strong>🔒 Sécurité</strong></div>
-          <div class="sr"><div class="sr-l"><strong>Changer le mot de passe</strong><span>Minimum 6 caractères</span></div>
+          <div class="sr"><div class="sr-l"><strong>Changer le mot de passe</strong><span>Minimum 6 caractères · vous serez peut-être invité à vous reconnecter</span></div>
             <div style="display:flex;gap:7px;flex-wrap:wrap"><input class="inp" id="cfg-pwd" type="password" placeholder="Nouveau MDP" style="max-width:170px"><button class="btn btn-d btn-sm" onclick="changePwd()">Changer</button></div>
           </div>
         </div>
@@ -418,19 +421,23 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
 // ════════════════════════════════════════
 // FIREBASE INIT (compat SDK, tout global)
 // ════════════════════════════════════════
-var db;
+var db, auth;
 var FB_READY = false;
-var SESSION_KEY = 'lmsv_auth';
-var DEFAULT_PWD = 'lmsv2025';
+// Compte technique Firebase Auth utilisé pour la connexion admin (un seul champ mot
+// de passe est affiché à l'écran, mais l'authentification réelle passe par Firebase
+// Auth — voir la note sécurité en bas de fichier / dans la réponse).
+var ADMIN_EMAIL = 'lm.seconde.vie.11@gmail.com';
 
 // EmailJS
 var EJ_SVC = 'service_kilcjk5';
 var EJ_TPLS = { credit:'template_1ldo3dh', retrait:'template_1ldo3dh', bienvenue:'template_carte_lm', carte:'template_carte_lm' };
 var EJ_KEY  = 'k4I5viOv2dibCvXpt';
+var EJ_READY = false;
+function isValidEmail(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
 
 // Data
 var E=[], H=[];
-var CFG = {nom:'LM Seconde Vie', ecole:'Lycée Louise Michel, Narbonne', email:'lm.seconde.vie.11@gmail.com', minPts:0};
+var CFG = {nom:'LM Seconde Vie', ecole:'Lycée Louise Michel, Narbonne', email:'lm.seconde.vie.11@gmail.com', minPts:0, ptsBienvenue:10};
 var CATS = [
   {id:'manteau',nom:'Manteau / veste',emoji:'🧥'},{id:'haut',nom:'Haut (t-shirt, pull)',emoji:'👕'},
   {id:'bas',nom:'Bas (pantalon, jupe)',emoji:'👖'},{id:'chaussures',nom:'Chaussures',emoji:'👟'},
@@ -460,37 +467,27 @@ window.onload = function() {
     appId:"1:744323296881:web:9e8b78c9408ddf79eff5d0"
   });
   db = firebase.firestore();
+  auth = firebase.auth();
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
   FB_READY = true;
   console.log('[Firebase] OK');
   document.getElementById('lpwd').focus();
-  // Si déjà authentifié
-  if(sessionStorage.getItem(SESSION_KEY)==='1') bootApp();
-};
 
-// ════════ PASSWORD ════════
-async function hashP(s) {
-  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return Array.from(new Uint8Array(buf)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');
-}
-
-async function checkPwd(pwd) {
-  var entered = await hashP(pwd);
-  var def = await hashP(DEFAULT_PWD);
-  try {
-    var snap = await Promise.race([
-      db.collection('config').doc('auth').get(),
-      new Promise(function(_,r){setTimeout(function(){r(new Error('timeout'));},6000);})
-    ]);
-    if(!snap.exists) {
-      await db.collection('config').doc('auth').set({hash: def});
-      return entered === def;
+  // La session est désormais gérée par Firebase Auth (jeton vérifié côté serveur),
+  // plus par un simple indicateur sessionStorage qui pouvait être falsifié depuis
+  // la console du navigateur.
+  auth.onAuthStateChanged(function(user) {
+    if(user) {
+      document.getElementById('ls').classList.add('gone');
+      bootApp();
+    } else {
+      stopRealtime();
+      if(camOn) stopCam();
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('ls').classList.remove('gone');
     }
-    return entered === snap.data().hash;
-  } catch(e) {
-    console.warn('[Auth] Fallback local:', e.message);
-    return entered === def;
-  }
-}
+  });
+};
 
 // ════════ LOGIN / LOGOUT ════════
 function doLogin() {
@@ -500,21 +497,17 @@ function doLogin() {
   var spin = document.getElementById('lspin');
   err.textContent = '';
   if(!pwd) { err.textContent = 'Saisissez le mot de passe.'; return; }
-  if(!FB_READY) { err.textContent = 'Firebase non prêt, patientez…'; return; }
+  if(!FB_READY) { err.textContent = 'Connexion non prête, patientez…'; return; }
   btn.disabled = true;
   spin.style.display = 'block';
-  checkPwd(pwd).then(function(ok) {
-    if(ok) {
-      sessionStorage.setItem(SESSION_KEY,'1');
-      document.getElementById('ls').classList.add('gone');
-      bootApp();
-    } else {
-      err.textContent = 'Mot de passe incorrect. (défaut : lmsv2025)';
-      document.getElementById('lpwd').value = '';
-      document.getElementById('lpwd').focus();
-    }
+  auth.signInWithEmailAndPassword(ADMIN_EMAIL, pwd).then(function() {
+    document.getElementById('lpwd').value = '';
+    // bootApp() est déclenché par onAuthStateChanged
   }).catch(function(e) {
-    err.textContent = 'Erreur : ' + e.message;
+    if(e.code==='auth/too-many-requests') err.textContent = 'Trop de tentatives. Réessayez plus tard.';
+    else err.textContent = 'Mot de passe incorrect.';
+    document.getElementById('lpwd').value = '';
+    document.getElementById('lpwd').focus();
   }).finally(function() {
     btn.disabled = false;
     spin.style.display = 'none';
@@ -522,13 +515,21 @@ function doLogin() {
 }
 
 function doLogout() {
-  sessionStorage.removeItem(SESSION_KEY);
-  stopRealtime();
-  if(camOn) stopCam();
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('ls').classList.remove('gone');
+  auth.signOut();
   document.getElementById('lpwd').value = '';
   document.getElementById('lerr').textContent = '';
+}
+
+function forgotPwd() {
+  var err = document.getElementById('lerr');
+  if(!FB_READY) { err.textContent = 'Connexion non prête, patientez…'; return; }
+  auth.sendPasswordResetEmail(ADMIN_EMAIL).then(function(){
+    err.style.color = 'var(--gr2)';
+    err.textContent = 'Email de réinitialisation envoyé à ' + ADMIN_EMAIL;
+  }).catch(function(e){
+    err.style.color = '';
+    err.textContent = 'Erreur : ' + (e.message||'réinitialisation impossible');
+  });
 }
 
 // ════════ BOOT ════════
@@ -667,8 +668,11 @@ function nav(p, btn) {
 
 // ════════ EMAILJS ════════
 function sendEmail(el, type, pts, catDesc) {
-  if(!el.email) { toast('Aucun email pour cet élève','⚠️'); return; }
-  try { emailjs.init({publicKey: EJ_KEY}); } catch(e){}
+  if(!el || !el.email) { toast('Aucun email pour cet élève','⚠️'); return; }
+  if(!isValidEmail(el.email)) { toast('Email invalide pour '+el.prenom+' '+el.nom,'⚠️'); return; }
+  if(typeof emailjs === 'undefined') { toast('Service email indisponible (bloqué par le réseau ?)','⚠️'); return; }
+  if(!EJ_READY) { try { emailjs.init({publicKey: EJ_KEY}); EJ_READY = true; } catch(e){ toast('Erreur init email','❌'); return; } }
+  try {
   var ptsAbs = Math.abs(pts);
   var subjects = {
     credit:    '+'+ptsAbs+' pts crédités — LM Seconde Vie',
@@ -719,6 +723,10 @@ function sendEmail(el, type, pts, catDesc) {
   emailjs.send(EJ_SVC, tpl, params)
     .then(function(r){console.log('[EmailJS] OK',r); toast('📧 Email envoyé à '+el.email);})
     .catch(function(e){console.error('[EmailJS] ERR',e); toast('Email erreur : '+(e.text||e.message||JSON.stringify(e)),'❌');});
+  } catch(e) {
+    console.error('[EmailJS] Exception',e);
+    toast('Erreur envoi email','❌');
+  }
 }
 
 // ════════ DASHBOARD ════════
@@ -751,18 +759,24 @@ function creerEleve() {
   var classe=document.getElementById('nv-c').value.trim();
   var email=document.getElementById('nv-e').value.trim();
   if(!prenom||!nom){toast('Prénom et nom requis','⚠️');return;}
+  if(email && !isValidEmail(email)){toast('Adresse email invalide','⚠️');return;}
   syncing();
   var id=genId();
-  var eleve={id:id,prenom:prenom,nom:nom,classe:classe,email:email,points:0,depots:0,createdAt:tsNow()};
+  var ptsBonus=Math.max(0,Number(CFG.ptsBienvenue)||0);
+  var eleve={id:id,prenom:prenom,nom:nom,classe:classe,email:email,points:ptsBonus,depots:0,createdAt:tsNow()};
   db.collection('eleves').doc(id).set(eleve).then(function(){
-    return saveMain();
+    var tasks=[saveMain()];
+    if(ptsBonus>0){
+      tasks.push(db.collection('historique').add({eleveId:id,type:'bonus',catId:'',pts:ptsBonus,etat:'',desc:'🎁 Bonus de bienvenue',date:tsNow()}));
+    }
+    return Promise.all(tasks);
   }).then(function(){
     synced();
-    document.getElementById('nv-res').innerHTML='<div style="background:var(--lt);border-radius:var(--r2);padding:13px;border:1px solid var(--bd)"><div style="font-size:10.5px;color:var(--gr);margin-bottom:3px">Carte créée ✅</div><div style="font-family:var(--ffd);font-size:16px;font-weight:700">'+prenom+' '+nom+'</div><div style="font-size:11.5px;color:var(--gr);margin-top:1px">'+classe+' · <strong style="color:var(--red)">'+id+'</strong></div></div>';
+    document.getElementById('nv-res').innerHTML='<div style="background:var(--lt);border-radius:var(--r2);padding:13px;border:1px solid var(--bd)"><div style="font-size:10.5px;color:var(--gr);margin-bottom:3px">Carte créée ✅</div><div style="font-family:var(--ffd);font-size:16px;font-weight:700">'+prenom+' '+nom+'</div><div style="font-size:11.5px;color:var(--gr);margin-top:1px">'+classe+' · <strong style="color:var(--red)">'+id+'</strong>'+(ptsBonus>0?' · <strong style="color:#1E7A40">+'+ptsBonus+' pts offerts</strong>':'')+'</div></div>';
     ['nv-p','nv-n','nv-c','nv-e'].forEach(function(i){document.getElementById(i).value='';});
-    fillDS(); toast('Carte créée : '+prenom+' '+nom);
-    if(email) sendEmail(eleve,'bienvenue',0,'');
-  }).catch(function(e){offline();toast('Erreur Firestore','❌');});
+    fillDS(); toast(ptsBonus>0?'Carte créée : '+prenom+' '+nom+' (+'+ptsBonus+' pts)':'Carte créée : '+prenom+' '+nom);
+    if(email) sendEmail(eleve,'bienvenue',ptsBonus,'🎁 Bonus de bienvenue');
+  }).catch(function(e){offline();toast('Erreur Firestore : '+(e.message||''),'❌');});
 }
 
 // ════════ DÉPÔT ════════
@@ -1021,8 +1035,8 @@ function renderHistorique() {
   var list=[...H].sort(function(a,b){return new Date(b.date)-new Date(a.date);});
   if(f!=='all') list=list.filter(function(h){return h.type===f;});
   if(q) list=list.filter(function(h){var el=E.find(function(e){return e.id===h.eleveId;});return (el&&(el.prenom+' '+el.nom).toLowerCase().includes(q))||h.desc.toLowerCase().includes(q);});
-  var tl={depot:'Dépôt',retrait:'Retrait'};
-  var tb2={depot:'bdg-gn',retrait:'bdg-r'};
+  var tl={depot:'Dépôt',retrait:'Retrait',bonus:'Bonus inscription'};
+  var tb2={depot:'bdg-gn',retrait:'bdg-r',bonus:'bdg-gn'};
   document.getElementById('h-tb').innerHTML=list.length?list.map(function(h){
     var el=E.find(function(e){return e.id===h.eleveId;})||{prenom:'?',nom:''};
     return '<tr><td style="font-size:11.5px;color:var(--gr);white-space:nowrap">'+fmtD(h.date)+'</td><td><div style="font-size:13px;font-weight:500">'+el.prenom+' '+el.nom+'</div></td><td><span class="bdg '+(tb2[h.type]||'bdg-gr')+'">'+(tl[h.type]||h.type)+'</span></td><td style="font-size:13px">'+h.desc+'</td><td><span style="font-family:var(--ffd);font-weight:700;font-size:14px;color:'+(h.pts>0?'#1E7A40':'var(--red)')+'">'+(h.pts>0?'+':'')+h.pts+' pts</span></td></tr>';
@@ -1076,23 +1090,30 @@ function fillReg(){
   document.getElementById('cfg-ecole').value=CFG.ecole||'Lycée Louise Michel, Narbonne';
   document.getElementById('cfg-email').value=CFG.email||'lm.seconde.vie.11@gmail.com';
   document.getElementById('cfg-mp').value=CFG.minPts||0;
+  document.getElementById('cfg-pb').value=(CFG.ptsBienvenue!=null?CFG.ptsBienvenue:10);
 }
 function saveConfig(){
   CFG.nom=document.getElementById('cfg-nom').value.trim();
   CFG.ecole=document.getElementById('cfg-ecole').value.trim();
   CFG.email=document.getElementById('cfg-email').value.trim();
   CFG.minPts=Number(document.getElementById('cfg-mp').value);
+  CFG.ptsBienvenue=Math.max(0,Number(document.getElementById('cfg-pb').value)||0);
   saveMain().then(function(){toast('Réglages sauvegardés ✅');});
 }
 async function changePwd(){
   var np=document.getElementById('cfg-pwd').value.trim();
   if(!np||np.length<6){toast('Minimum 6 caractères','⚠️');return;}
   try{
-    var h=await hashP(np);
-    await db.collection('config').doc('auth').set({hash:h});
+    await auth.currentUser.updatePassword(np);
     document.getElementById('cfg-pwd').value='';
     toast('Mot de passe changé ✅');
-  }catch(e){toast('Erreur changement MDP','❌');}
+  }catch(e){
+    if(e.code==='auth/requires-recent-login'){
+      toast('Reconnectez-vous puis réessayez immédiatement','⚠️');
+    } else {
+      toast('Erreur changement MDP : '+(e.message||''),'❌');
+    }
+  }
 }
 function exportData(){
   var blob=new Blob([JSON.stringify({eleves:E,historique:H,config:CFG,cats:CATS,bar:BAR},null,2)],{type:'application/json'});
