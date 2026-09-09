@@ -666,13 +666,48 @@ function nav(p, btn) {
   if(p==='reglages')   fillReg();
 }
 
+// ════════ QR / CODE-BARRES POUR EMAIL ════════
+// Génère le QR code et le code-barres hors écran, en images base64, pour pouvoir
+// les glisser dans les variables du template EmailJS (le rendu affiché dans la
+// fiche carte ne quitte jamais le navigateur, donc il faut les regénérer ici).
+function genCardImages(el) {
+  return new Promise(function(resolve) {
+    var out = {qr_image:'', barcode_image:''};
+    try {
+      var qrHost = document.createElement('div');
+      if(typeof QRCode !== 'undefined') {
+        new QRCode(qrHost, {text: el.id, width:180, height:180, colorDark:'#000', colorLight:'#fff', correctLevel:QRCode.CorrectLevel.H});
+      }
+      var bcCanvas = document.createElement('canvas');
+      if(typeof JsBarcode !== 'undefined') {
+        JsBarcode(bcCanvas, el.id, {format:'CODE128', width:2.6, height:60, displayValue:true, fontSize:16, background:'#ffffff', lineColor:'#000000', margin:8});
+        out.barcode_image = bcCanvas.toDataURL('image/png');
+      }
+      // QRCode.js dessine sur un <canvas> (ou un <img> en repli) de façon quasi
+      // synchrone mais après un micro-délai selon les navigateurs → on laisse un tick.
+      setTimeout(function() {
+        try {
+          var c = qrHost.querySelector('canvas');
+          if(c) out.qr_image = c.toDataURL('image/png');
+          else { var img = qrHost.querySelector('img'); if(img && img.src) out.qr_image = img.src; }
+        } catch(e) { console.warn('[QR] génération échouée', e); }
+        resolve(out);
+      }, 80);
+    } catch(e) {
+      console.warn('[Images carte] génération échouée', e);
+      resolve(out);
+    }
+  });
+}
+
 // ════════ EMAILJS ════════
-function sendEmail(el, type, pts, catDesc) {
+async function sendEmail(el, type, pts, catDesc) {
   if(!el || !el.email) { toast('Aucun email pour cet élève','⚠️'); return; }
   if(!isValidEmail(el.email)) { toast('Email invalide pour '+el.prenom+' '+el.nom,'⚠️'); return; }
   if(typeof emailjs === 'undefined') { toast('Service email indisponible (bloqué par le réseau ?)','⚠️'); return; }
   if(!EJ_READY) { try { emailjs.init({publicKey: EJ_KEY}); EJ_READY = true; } catch(e){ toast('Erreur init email','❌'); return; } }
   try {
+  var imgs = await genCardImages(el);
   var ptsAbs = Math.abs(pts);
   var subjects = {
     credit:    '+'+ptsAbs+' pts crédités — LM Seconde Vie',
@@ -715,7 +750,9 @@ function sendEmail(el, type, pts, catDesc) {
     sous_titre:     sous[type]||'',
     school:         CFG.ecole||'Lycée Louise Michel, Narbonne',
     recyclerie:     CFG.nom||'LM Seconde Vie',
-    contact_email:  CFG.email||'lm.seconde.vie.11@gmail.com'
+    contact_email:  CFG.email||'lm.seconde.vie.11@gmail.com',
+    qr_image:       imgs.qr_image,
+    barcode_image:  imgs.barcode_image
   };
 
   var tpl = EJ_TPLS[type]||EJ_TPLS.carte;
