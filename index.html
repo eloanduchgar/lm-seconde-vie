@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LM Seconde Vie</title>
 <!-- Firebase compat (PAS de type=module, tout est global) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -19,11 +19,20 @@
 :root{
   --red:#C0392B;--red2:#E74C3C;--red3:#922B21;--rp:#FEF0EF;--rm:#FADBD8;
   --dk:#1A1A1A;--dk2:#252525;--wh:#fff;
-  --gr:#888;--gr2:#555;--lt:#F5F2EF;--bd:rgba(0,0,0,.09);--bd2:rgba(0,0,0,.15);
+  --gr:#666;--gr2:#555;--lt:#F5F2EF;--bd:rgba(0,0,0,.09);--bd2:rgba(0,0,0,.15);
   --ffd:"Playfair Display",serif;--ffb:"Outfit",sans-serif;
   --r:10px;--r2:16px;--r3:22px;
 }
 html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+/* Accessibilité : focus clavier toujours visible, même quand une bordure ne suffit pas */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.ni:focus-visible,.stile:focus-visible,[tabindex]:focus-visible{
+  outline:3px solid var(--red2)!important;outline-offset:2px!important;
+}
+.inp:focus,.sel:focus,.lbox input:focus,.pi:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(192,57,43,.22)}
+.skip-link{position:absolute;left:-9999px;top:0;background:var(--red);color:#fff;padding:10px 18px;border-radius:0 0 8px 0;z-index:99999;font-weight:600;text-decoration:none}
+.skip-link:focus{left:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 #ls{position:fixed;inset:0;background:var(--dk);display:flex;align-items:center;justify-content:center;z-index:9000;padding:16px}
 #ls.gone{display:none!important}
 .lbox{background:var(--wh);border-radius:var(--r3);padding:40px 32px;width:100%;max-width:400px;text-align:center}
@@ -195,16 +204,18 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
 </style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Aller au contenu principal</a>
 
 <div id="ls">
   <div class="lbox">
-    <div class="lico">♻</div>
+    <div class="lico" aria-hidden="true">♻</div>
     <h1>LM Seconde Vie</h1>
     <p>Recyclerie · Lycée Louise Michel, Narbonne</p>
-    <input type="password" id="lpwd" placeholder="Mot de passe">
+    <label for="lpwd" class="sr-only">Mot de passe</label>
+    <input type="password" id="lpwd" placeholder="Mot de passe" aria-label="Mot de passe">
     <button class="lbtn" id="lbtn" onclick="doLogin()">Accéder →</button>
-    <div class="lerr" id="lerr"></div>
-    <div class="lspin" id="lspin">Connexion en cours…</div>
+    <div class="lerr" id="lerr" role="alert"></div>
+    <div class="lspin" id="lspin" role="status">Connexion en cours…</div>
     <div style="margin-top:12px"><a href="#" onclick="forgotPwd();return false;" style="font-size:11.5px;color:var(--gr)">Mot de passe oublié ?</a></div>
   </div>
 </div>
@@ -212,9 +223,9 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
 <div id="loader" style="display:none"><div class="sp"></div><p>CHARGEMENT…</p></div>
 
 <div class="mob-bar">
-  <div class="mob-logo"><span>♻</span>LM Seconde Vie</div>
-  <button class="mob-btn" onclick="toggleSB()">
-    <svg viewBox="0 0 24 24" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  <div class="mob-logo"><span aria-hidden="true">♻</span>LM Seconde Vie</div>
+  <button class="mob-btn" onclick="toggleSB()" aria-label="Ouvrir le menu" aria-controls="sb" aria-expanded="false" id="mob-btn">
+    <svg viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
   </button>
 </div>
 <div class="mob-ov" id="mob-ov" onclick="toggleSB()"></div>
@@ -225,16 +236,16 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
       <div class="sb-brand-row"><div class="sb-ico">♻</div><div class="sb-name">LM Seconde Vie</div></div>
       <div class="sb-sub">Lycée Louise Michel</div>
     </div>
-    <nav class="snav">
-      <button class="ni active" onclick="nav('accueil',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>Tableau de bord</button>
-      <button class="ni" onclick="nav('scanner',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17h3v3M14 20h3"/></svg>Scanner</button>
-      <button class="ni" onclick="nav('depot',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>Dépôt article</button>
+    <nav class="snav" aria-label="Navigation principale">
+      <button class="ni active" onclick="nav('accueil',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>Tableau de bord</button>
+      <button class="ni" onclick="nav('scanner',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17h3v3M14 20h3"/></svg>Scanner</button>
+      <button class="ni" onclick="nav('depot',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>Dépôt article</button>
       <div class="nsep"></div>
-      <button class="ni" onclick="nav('eleves',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Élèves</button>
-      <button class="ni" onclick="nav('baremes',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Barèmes</button>
-      <button class="ni" onclick="nav('historique',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.34"/></svg>Historique</button>
+      <button class="ni" onclick="nav('eleves',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Élèves</button>
+      <button class="ni" onclick="nav('baremes',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Barèmes</button>
+      <button class="ni" onclick="nav('historique',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.34"/></svg>Historique</button>
       <div class="nsep"></div>
-      <button class="ni" onclick="nav('reglages',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</button>
+      <button class="ni" onclick="nav('reglages',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Réglages</button>
     </nav>
     <div class="sf">
       <div class="sync-row"><div class="sdot" id="sdot"></div><span id="slbl">Synchronisé</span></div>
@@ -242,7 +253,7 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
       <div class="sv">v5.0 · FIREBASE · LM SECONDE VIE</div>
     </div>
   </aside>
-  <main class="main">
+  <main class="main" id="main-content">
     <div class="tb">
       <div class="tb-title" id="tbt">Tableau de bord</div>
       <div class="tb-r">
@@ -394,8 +405,8 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
 </div>
 
 <!-- MODALS -->
-<div class="mbg" id="modal-credit">
-  <div class="modal"><button class="mcl" onclick="closeM('credit')">✕</button><div class="mtit">➕ Créditer</div>
+<div class="mbg" id="modal-credit" role="dialog" aria-modal="true" aria-labelledby="mtit-credit">
+  <div class="modal"><button class="mcl" onclick="closeM('credit')" aria-label="Fermer">✕</button><div class="mtit" id="mtit-credit">➕ Créditer</div>
     <div id="cr-info" style="margin-bottom:12px"></div>
     <div class="f" style="margin-bottom:10px"><label>Catégorie</label><select class="sel" id="cr-cat" onchange="updateCrP()"><option value="">Choisir…</option></select></div>
     <div class="f" style="margin-bottom:13px"><label>État</label><div class="rg" id="cr-eg"><button class="rb active" onclick="setCrE('tbe',this)">TBE</button><button class="rb" onclick="setCrE('be',this)">Bon état</button><button class="rb" onclick="setCrE('use',this)">Usé</button></div></div>
@@ -403,19 +414,19 @@ html,body{height:100%;font-family:var(--ffb);background:var(--lt);color:var(--dk
     <button class="btn btn-r btn-lg" style="width:100%;margin-top:13px" onclick="doCredit()">✅ Confirmer</button>
   </div>
 </div>
-<div class="mbg" id="modal-retrait">
-  <div class="modal"><button class="mcl" onclick="closeM('retrait')">✕</button><div class="mtit">➖ Retrait article</div>
+<div class="mbg" id="modal-retrait" role="dialog" aria-modal="true" aria-labelledby="mtit-retrait">
+  <div class="modal"><button class="mcl" onclick="closeM('retrait')" aria-label="Fermer">✕</button><div class="mtit" id="mtit-retrait">➖ Retrait article</div>
     <div id="rt-info" style="margin-bottom:12px"></div>
     <div class="f" style="margin-bottom:13px"><label>Article repris</label><select class="sel" id="rt-cat"><option value="">Choisir…</option></select></div>
     <div id="rt-warn" style="display:none;padding:10px 13px;background:var(--rp);border-radius:var(--r);color:var(--red3);font-size:12.5px;margin-bottom:9px"></div>
     <button class="btn btn-lg" style="width:100%;background:var(--red);color:white" onclick="doRetrait()">✅ Confirmer</button>
   </div>
 </div>
-<div class="mbg" id="modal-el">
-  <div class="modal" style="max-width:480px"><button class="mcl" onclick="closeM('el')">✕</button><div class="mtit" id="mel-t">Fiche élève</div><div id="mel-c"></div></div>
+<div class="mbg" id="modal-el" role="dialog" aria-modal="true" aria-labelledby="mel-t">
+  <div class="modal" style="max-width:480px"><button class="mcl" onclick="closeM('el')" aria-label="Fermer">✕</button><div class="mtit" id="mel-t">Fiche élève</div><div id="mel-c"></div></div>
 </div>
 
-<div class="tc" id="tc"></div>
+<div class="tc" id="tc" role="status" aria-live="polite"></div>
 
 <script>
 // ════════════════════════════════════════
@@ -639,13 +650,25 @@ function toast(msg,ico) {
 }
 
 // ════════ MODAL ════════
-function openM(id)  { document.getElementById('modal-'+id).classList.add('open'); }
+function openM(id)  {
+  document.getElementById('modal-'+id).classList.add('open');
+  var m=document.getElementById('modal-'+id);
+  var f=m.querySelector('input,select,button:not(.mcl)');
+  if(f) setTimeout(function(){f.focus();},60);
+}
 function closeM(id) { document.getElementById('modal-'+id).classList.remove('open'); }
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape'){
+    document.querySelectorAll('.mbg.open').forEach(function(m){ m.classList.remove('open'); });
+  }
+});
 
 // ════════ MOBILE SIDEBAR ════════
 function toggleSB() {
-  document.getElementById('sb').classList.toggle('open');
+  var open = document.getElementById('sb').classList.toggle('open');
   document.getElementById('mob-ov').classList.toggle('open');
+  var btn = document.getElementById('mob-btn');
+  if(btn){ btn.setAttribute('aria-expanded', open?'true':'false'); btn.setAttribute('aria-label', open?'Fermer le menu':'Ouvrir le menu'); }
 }
 
 // ════════ NAV ════════
@@ -1033,12 +1056,19 @@ function renderEleves() {
   var tb=document.getElementById('el-tb');
   if(!list.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-i">👤</div><div class="empty-t">Aucun élève</div></div></td></tr>';return;}
   tb.innerHTML=list.map(function(e){
-    return '<tr><td><div style="display:flex;align-items:center;gap:8px">'+av(e,32)+'<div><div style="font-weight:500;font-size:13px">'+e.prenom+' '+e.nom+'</div><div style="font-size:10.5px;color:var(--gr)">'+(e.email||'')+'</div></div></div></td><td><span class="bdg bdg-gr">'+(e.classe||'—')+'</span></td><td><span style="font-family:monospace;font-size:11px;color:var(--gr2)">'+e.id+'</span></td><td><span class="pp">'+e.points+' pts</span></td><td><span style="font-size:12.5px;color:var(--gr)">'+e.depots+'</span></td><td><div style="display:flex;gap:5px"><button class="btn btn-g btn-sm" onclick="openFiche(\''+e.id+'\')">Fiche</button><button class="btn btn-sm" style="background:var(--rm);color:var(--red3)" onclick="delEleve(\''+e.id+'\')">✕</button></div></td></tr>';
+    return '<tr><td><div style="display:flex;align-items:center;gap:8px">'+av(e,32)+'<div><div style="font-weight:500;font-size:13px">'+e.prenom+' '+e.nom+'</div><div style="font-size:10.5px;color:var(--gr)">'+(e.email||'')+'</div></div></div></td><td><span class="bdg bdg-gr">'+(e.classe||'—')+'</span></td><td><span style="font-family:monospace;font-size:11px;color:var(--gr2)">'+e.id+'</span></td><td><span class="pp">'+e.points+' pts</span></td><td><span style="font-size:12.5px;color:var(--gr)">'+e.depots+'</span></td><td><div style="display:flex;gap:5px"><button class="btn btn-g btn-sm" onclick="openFiche(\''+e.id+'\')">Fiche</button><button class="btn btn-sm" style="background:var(--rm);color:var(--red3)" onclick="delEleve(\''+e.id+'\')" aria-label="Supprimer '+e.prenom+' '+e.nom+'">✕</button></div></td></tr>';
   }).join('');
 }
 
 function openFiche(id) {
   var el=E.find(function(e){return e.id===id;}); if(!el) return;
+  renderFicheView(el);
+  openM('el');
+  setTimeout(function(){renderVC(el,'mvc-'+id);},50);
+}
+
+function renderFicheView(el) {
+  var id=el.id;
   document.getElementById('mel-t').textContent=el.prenom+' '+el.nom;
   var hist=H.filter(function(h){return h.eleveId===id;}).slice(0,10);
   document.getElementById('mel-c').innerHTML=
@@ -1052,9 +1082,55 @@ function openFiche(id) {
     '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'+
       '<button class="btn btn-r btn-sm" onclick="closeM(\'el\');showP(E.find(function(x){return x.id===\''+id+'\';}));nav(\'scanner\',document.querySelectorAll(\'.ni\')[1])">Scanner / Créditer</button>'+
       '<button class="btn btn-g btn-sm" onclick="sendEmail(E.find(function(x){return x.id===\''+id+'\';}),\'carte\',0,\'\')">📧 Envoyer carte</button>'+
+      '<button class="btn btn-d btn-sm" onclick="editFiche(\''+id+'\')">✏️ Modifier</button>'+
     '</div>';
-  openM('el');
+}
+
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function editFiche(id) {
+  var el=E.find(function(e){return e.id===id;}); if(!el) return;
+  document.getElementById('mel-t').textContent='Modifier · '+el.prenom+' '+el.nom;
+  document.getElementById('mel-c').innerHTML=
+    '<div style="padding:9px 11px;background:var(--lt);border-radius:var(--r);margin-bottom:13px;font-size:11.5px;color:var(--gr)">Carte <strong style="color:var(--dk);font-family:monospace">'+id+'</strong> · les points et l\'historique ne sont pas modifiés ici.</div>'+
+    '<div class="f" style="margin-bottom:10px"><label for="ef-p">Prénom</label><input class="inp" id="ef-p" value="'+esc(el.prenom)+'"></div>'+
+    '<div class="f" style="margin-bottom:10px"><label for="ef-n">Nom</label><input class="inp" id="ef-n" value="'+esc(el.nom)+'"></div>'+
+    '<div class="g2" style="margin-bottom:13px">'+
+      '<div class="f"><label for="ef-c">Classe</label><input class="inp" id="ef-c" value="'+esc(el.classe)+'"></div>'+
+      '<div class="f"><label for="ef-e">Email</label><input class="inp" id="ef-e" type="email" value="'+esc(el.email)+'"></div>'+
+    '</div>'+
+    '<div id="ef-err" role="alert" style="color:var(--red);font-size:12.5px;margin-bottom:10px;min-height:14px"></div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button class="btn btn-r btn-sm" onclick="saveFicheEdit(\''+id+'\')">💾 Enregistrer</button>'+
+      '<button class="btn btn-g btn-sm" onclick="cancelFicheEdit(\''+id+'\')">Annuler</button>'+
+    '</div>';
+  setTimeout(function(){var f=document.getElementById('ef-p'); if(f) f.focus();},30);
+}
+
+function cancelFicheEdit(id) {
+  var el=E.find(function(e){return e.id===id;}); if(!el) return;
+  renderFicheView(el);
   setTimeout(function(){renderVC(el,'mvc-'+id);},50);
+}
+
+function saveFicheEdit(id) {
+  var el=E.find(function(e){return e.id===id;}); if(!el) return;
+  var err=document.getElementById('ef-err');
+  var prenom=document.getElementById('ef-p').value.trim();
+  var nom=document.getElementById('ef-n').value.trim();
+  var classe=document.getElementById('ef-c').value.trim();
+  var email=document.getElementById('ef-e').value.trim();
+  if(!prenom||!nom){ err.textContent='Prénom et nom requis.'; return; }
+  if(email && !isValidEmail(email)){ err.textContent='Adresse email invalide.'; return; }
+  syncing();
+  db.collection('eleves').doc(id).update({prenom:prenom,nom:nom,classe:classe,email:email}).then(function(){
+    synced();
+    toast('Fiche mise à jour ✅');
+    var updated=E.find(function(e){return e.id===id;})||el;
+    updated.prenom=prenom; updated.nom=nom; updated.classe=classe; updated.email=email;
+    renderFicheView(updated);
+    setTimeout(function(){renderVC(updated,'mvc-'+id);},50);
+  }).catch(function(e){ offline(); err.textContent='Erreur : '+(e.message||'sauvegarde impossible'); });
 }
 
 function delEleve(id) {
