@@ -19,7 +19,9 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --red:#C0392B;--red2:#E74C3C;--red3:#922B21;--rp:#FEF0EF;--rm:#FADBD8;
+  --red:#1A7A00;--red2:#C97C00;--red3:#146600;--rp:#E8F7E3;--rm:#DFF3D8;
+  --wp:#FFF3E0;--wm:#FDE7C0;--wt:#7A4E00;
+  --dgp:#FEF0EF;--dgm:#FADBD8;--dgt:#922B21;
   --dk:#1A1A1A;--dk2:#252525;--wh:#fff;
   --gr:#666;--gr2:#555;--lt:#F5F2EF;--bd:rgba(0,0,0,.09);--bd2:rgba(0,0,0,.15);
   --ffd:"Playfair Display",serif;--ffb:"Outfit",sans-serif;
@@ -119,7 +121,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
 .inp:focus,.sel:focus{border-color:var(--red)}
 .inp::placeholder{color:#bbb}
 .bdg{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600}
-.bdg-r{background:var(--rm);color:var(--red3)}
+.bdg-r{background:var(--wm);color:var(--wt)}
 .bdg-gr{background:var(--lt);color:var(--gr2)}
 .bdg-gn{background:#EAF5EE;color:#1E7A40}
 .tbl{width:100%;border-collapse:collapse}
@@ -130,7 +132,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
 .hr{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--bd)}
 .hr:last-child{border-bottom:none}
 .hico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.hico.p{background:#EAF5EE}.hico.m{background:var(--rp)}
+.hico.p{background:#EAF5EE}.hico.m{background:var(--wp)}
 .hi{flex:1;min-width:0}
 .hn{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hs{font-size:11px;color:var(--gr);margin-top:1px}
@@ -398,7 +400,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
         </div>
         <div class="sg"><div class="sg-h"><strong>🗑️ Données</strong></div>
           <div class="sr"><div class="sr-l"><strong>Exporter</strong><span>JSON</span></div><button class="btn btn-g btn-sm" onclick="exportData()">📥 Export</button></div>
-          <div class="sr"><div class="sr-l"><strong>Réinitialiser tout</strong><span style="color:var(--red)">⚠️ Irréversible</span></div><button class="btn btn-sm" style="background:var(--rm);color:var(--red3)" onclick="resetAll()">🗑️ Reset</button></div>
+          <div class="sr"><div class="sr-l"><strong>Réinitialiser tout</strong><span style="color:var(--dgt)">⚠️ Irréversible</span></div><button class="btn btn-sm" style="background:var(--dgm);color:var(--dgt)" onclick="resetAll()">🗑️ Reset</button></div>
         </div>
         <button class="btn btn-r btn-lg" onclick="saveConfig()">💾 Sauvegarder</button>
       </div>
@@ -420,7 +422,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
   <div class="modal"><button class="mcl" onclick="closeM('retrait')" aria-label="Fermer">✕</button><div class="mtit" id="mtit-retrait">➖ Retrait article</div>
     <div id="rt-info" style="margin-bottom:12px"></div>
     <div class="f" style="margin-bottom:13px"><label>Article repris</label><select class="sel" id="rt-cat"><option value="">Choisir…</option></select></div>
-    <div id="rt-warn" style="display:none;padding:10px 13px;background:var(--rp);border-radius:var(--r);color:var(--red3);font-size:12.5px;margin-bottom:9px"></div>
+    <div id="rt-warn" style="display:none;padding:10px 13px;background:var(--dgp);border-radius:var(--r);color:var(--dgt);font-size:12.5px;margin-bottom:9px"></div>
     <button class="btn btn-lg" style="width:100%;background:var(--red);color:white" onclick="doRetrait()">✅ Confirmer</button>
   </div>
 </div>
@@ -752,7 +754,7 @@ async function sendEmail(el, type, pts, catDesc) {
     bienvenue: 'Ta carte LM Seconde Vie a été créée',
     carte:     'Présente cet email à la recyclerie'
   };
-  var cols = {credit:'#1E7A40',retrait:'#C0392B',bienvenue:'#C0392B',carte:'#C0392B'};
+  var cols = {credit:'#1A7A00',retrait:'#C97C00',bienvenue:'#1A7A00',carte:'#1A7A00'};
   var icos = {credit:'📥',retrait:'📤',bienvenue:'🎉',carte:'🪪'};
 
   var params = {
@@ -769,7 +771,7 @@ async function sendEmail(el, type, pts, catDesc) {
     pts_operation:  pts>0?'+'+ptsAbs:pts<0?'−'+ptsAbs:'0',
     type_operation: type,
     article:        catDesc||'',
-    couleur:        cols[type]||'#C0392B',
+    couleur:        cols[type]||'#1A7A00',
     icone:          icos[type]||'📧',
     titre:          titres[type]||'Bonjour '+el.prenom,
     sous_titre:     sous[type]||'',
@@ -1058,7 +1060,7 @@ function renderEleves() {
   var tb=document.getElementById('el-tb');
   if(!list.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-i">👤</div><div class="empty-t">Aucun élève</div></div></td></tr>';return;}
   tb.innerHTML=list.map(function(e){
-    return '<tr><td><div style="display:flex;align-items:center;gap:8px">'+av(e,32)+'<div><div style="font-weight:500;font-size:13px">'+e.prenom+' '+e.nom+'</div><div style="font-size:10.5px;color:var(--gr)">'+(e.email||'')+'</div></div></div></td><td><span class="bdg bdg-gr">'+(e.classe||'—')+'</span></td><td><span style="font-family:monospace;font-size:11px;color:var(--gr2)">'+e.id+'</span></td><td><span class="pp">'+e.points+' pts</span></td><td><span style="font-size:12.5px;color:var(--gr)">'+e.depots+'</span></td><td><div style="display:flex;gap:5px"><button class="btn btn-g btn-sm" onclick="openFiche(\''+e.id+'\')">Fiche</button><button class="btn btn-sm" style="background:var(--rm);color:var(--red3)" onclick="delEleve(\''+e.id+'\')" aria-label="Supprimer '+e.prenom+' '+e.nom+'">✕</button></div></td></tr>';
+    return '<tr><td><div style="display:flex;align-items:center;gap:8px">'+av(e,32)+'<div><div style="font-weight:500;font-size:13px">'+e.prenom+' '+e.nom+'</div><div style="font-size:10.5px;color:var(--gr)">'+(e.email||'')+'</div></div></div></td><td><span class="bdg bdg-gr">'+(e.classe||'—')+'</span></td><td><span style="font-family:monospace;font-size:11px;color:var(--gr2)">'+e.id+'</span></td><td><span class="pp">'+e.points+' pts</span></td><td><span style="font-size:12.5px;color:var(--gr)">'+e.depots+'</span></td><td><div style="display:flex;gap:5px"><button class="btn btn-g btn-sm" onclick="openFiche(\''+e.id+'\')">Fiche</button><button class="btn btn-sm" style="background:var(--dgm);color:var(--dgt)" onclick="delEleve(\''+e.id+'\')" aria-label="Supprimer '+e.prenom+' '+e.nom+'">✕</button></div></td></tr>';
   }).join('');
 }
 
