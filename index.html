@@ -335,13 +335,17 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
               <label>Type de carte</label>
               <div class="rg" id="nv-tg">
                 <button class="rb active" type="button" onclick="setNvType('region',this)">🪪 Carte Région</button>
-                <button class="rb" type="button" onclick="setNvType('gen',this)">🎓 Prof / Pas de carte</button>
+                <button class="rb" type="button" onclick="setNvType('gen',this)">🚫 Sans carte Région</button>
               </div>
             </div>
             <div class="f" id="nv-cr-wrap" style="margin-bottom:10px">
               <label for="nv-cr">Numéro carte Région</label>
-              <input class="inp" id="nv-cr" placeholder="Scanner ou saisir le code-barres…" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('nv-p').focus();}">
-              <div style="font-size:11px;color:var(--gr);margin-top:4px">Utilisez la douchette / caméra pour scanner directement le code-barres au dos de la carte.</div>
+              <div style="display:flex;gap:7px">
+                <input class="inp" id="nv-cr" style="flex:1" placeholder="Scanner ou saisir le code-barres…" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('nv-p').focus();}">
+                <button class="btn btn-g btn-sm" type="button" id="nv-cam-btn" onclick="toggleNvCam()">📷 Scanner</button>
+              </div>
+              <div id="nv-qr-reader" style="display:none;margin-top:10px;border-radius:var(--r2);overflow:hidden"></div>
+              <div id="nv-cam-st" style="font-size:11px;color:var(--gr);margin-top:4px">Utilisez la caméra ou une douchette pour scanner le code-barres au dos de la carte.</div>
             </div>
             <div class="f" style="margin-bottom:10px"><label>Prénom</label><input class="inp" id="nv-p" placeholder="Prénom"></div>
             <div class="f" style="margin-bottom:10px"><label>Nom</label><input class="inp" id="nv-n" placeholder="Nom"></div>
@@ -510,6 +514,7 @@ window.onload = function() {
     } else {
       stopRealtime();
       if(camOn) stopCam();
+      if(nvCamOn) stopNvCam();
       document.getElementById('app').style.display = 'none';
       document.getElementById('ls').classList.remove('gone');
     }
@@ -702,6 +707,7 @@ function nav(p, btn) {
   if(p==='historique') renderHistorique();
   if(p==='baremes')    renderBaremes();
   if(p==='depot')      fillDS();
+  if(p!=='depot' && nvCamOn) stopNvCam();
   if(p==='reglages')   fillReg();
 }
 
@@ -830,11 +836,43 @@ function renderDash() {
 
 // ════════ CRÉER ÉLÈVE ════════
 var NV_TYPE = 'region';
+var nvScanner = null, nvCamOn = false;
+
 function setNvType(t, btn) {
   NV_TYPE = t;
   document.querySelectorAll('#nv-tg .rb').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');
   document.getElementById('nv-cr-wrap').style.display = (t==='region') ? '' : 'none';
+  if(t!=='region' && nvCamOn) stopNvCam();
+}
+
+function toggleNvCam() { if(!nvCamOn) startNvCam(); else stopNvCam(); }
+
+function startNvCam() {
+  if(camOn) stopCam(); // évite d'avoir 2 caméras ouvertes en même temps
+  var reader=document.getElementById('nv-qr-reader');
+  reader.style.display='block';
+  if(nvScanner){nvScanner.clear().catch(function(){});nvScanner=null;}
+  nvScanner = new Html5QrcodeScanner('nv-qr-reader',{fps:12,qrbox:{width:220,height:150},aspectRatio:1.4},{});
+  nvScanner.render(function(r){onNvScan(r);},function(){});
+  nvCamOn=true;
+  document.getElementById('nv-cam-btn').textContent='⏹ Arrêter';
+  document.getElementById('nv-cam-st').textContent='Pointez la caméra sur le code-barres de la carte…';
+}
+
+function stopNvCam() {
+  if(nvScanner){nvScanner.clear().catch(function(){});nvScanner=null;}
+  nvCamOn=false;
+  document.getElementById('nv-qr-reader').style.display='none';
+  var b=document.getElementById('nv-cam-btn'); if(b) b.textContent='📷 Scanner';
+  var st=document.getElementById('nv-cam-st'); if(st) st.textContent='Utilisez la caméra ou une douchette pour scanner le code-barres au dos de la carte.';
+}
+
+function onNvScan(r) {
+  document.getElementById('nv-cr').value = r;
+  stopNvCam();
+  toast('📷 Code scanné : '+r);
+  document.getElementById('nv-p').focus();
 }
 
 function creerEleve() {
