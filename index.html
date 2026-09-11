@@ -331,6 +331,18 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
           </div>
           <div class="card">
             <div class="ctit">Nouvel élève</div>
+            <div class="f" style="margin-bottom:11px">
+              <label>Type de carte</label>
+              <div class="rg" id="nv-tg">
+                <button class="rb active" type="button" onclick="setNvType('region',this)">🪪 Carte Région</button>
+                <button class="rb" type="button" onclick="setNvType('gen',this)">🎓 Prof / Pas de carte</button>
+              </div>
+            </div>
+            <div class="f" id="nv-cr-wrap" style="margin-bottom:10px">
+              <label for="nv-cr">Numéro carte Région</label>
+              <input class="inp" id="nv-cr" placeholder="Scanner ou saisir le code-barres…" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('nv-p').focus();}">
+              <div style="font-size:11px;color:var(--gr);margin-top:4px">Utilisez la douchette / caméra pour scanner directement le code-barres au dos de la carte.</div>
+            </div>
             <div class="f" style="margin-bottom:10px"><label>Prénom</label><input class="inp" id="nv-p" placeholder="Prénom"></div>
             <div class="f" style="margin-bottom:10px"><label>Nom</label><input class="inp" id="nv-n" placeholder="Nom"></div>
             <div class="g2" style="margin-bottom:10px">
@@ -817,6 +829,14 @@ function renderDash() {
 }
 
 // ════════ CRÉER ÉLÈVE ════════
+var NV_TYPE = 'region';
+function setNvType(t, btn) {
+  NV_TYPE = t;
+  document.querySelectorAll('#nv-tg .rb').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('nv-cr-wrap').style.display = (t==='region') ? '' : 'none';
+}
+
 function creerEleve() {
   var prenom=document.getElementById('nv-p').value.trim();
   var nom=document.getElementById('nv-n').value.trim();
@@ -824,8 +844,18 @@ function creerEleve() {
   var email=document.getElementById('nv-e').value.trim();
   if(!prenom||!nom){toast('Prénom et nom requis','⚠️');return;}
   if(email && !isValidEmail(email)){toast('Adresse email invalide','⚠️');return;}
+
+  var id;
+  if(NV_TYPE==='region') {
+    var cr=document.getElementById('nv-cr').value.trim();
+    if(!cr){toast('Scannez ou saisissez le numéro de la carte Région','⚠️');return;}
+    if(E.find(function(e){return e.id===cr;})){toast('Cette carte Région est déjà associée à un élève','⚠️');return;}
+    id=cr;
+  } else {
+    id=genId();
+  }
+
   syncing();
-  var id=genId();
   var ptsBonus=Math.max(0,Number(CFG.ptsBienvenue)||0);
   var eleve={id:id,prenom:prenom,nom:nom,classe:classe,email:email,points:ptsBonus,depots:0,createdAt:tsNow()};
   db.collection('eleves').doc(id).set(eleve).then(function(){
@@ -837,7 +867,7 @@ function creerEleve() {
   }).then(function(){
     synced();
     document.getElementById('nv-res').innerHTML='<div style="background:var(--lt);border-radius:var(--r2);padding:13px;border:1px solid var(--bd)"><div style="font-size:10.5px;color:var(--gr);margin-bottom:3px">Carte créée ✅</div><div style="font-family:var(--ffd);font-size:16px;font-weight:700">'+prenom+' '+nom+'</div><div style="font-size:11.5px;color:var(--gr);margin-top:1px">'+classe+' · <strong style="color:var(--red)">'+id+'</strong>'+(ptsBonus>0?' · <strong style="color:#1E7A40">+'+ptsBonus+' pts offerts</strong>':'')+'</div></div>';
-    ['nv-p','nv-n','nv-c','nv-e'].forEach(function(i){document.getElementById(i).value='';});
+    ['nv-p','nv-n','nv-c','nv-e','nv-cr'].forEach(function(i){document.getElementById(i).value='';});
     fillDS(); toast(ptsBonus>0?'Carte créée : '+prenom+' '+nom+' (+'+ptsBonus+' pts)':'Carte créée : '+prenom+' '+nom);
     if(email) sendEmail(eleve,'bienvenue',ptsBonus,'🎁 Bonus de bienvenue');
   }).catch(function(e){offline();toast('Erreur Firestore : '+(e.message||''),'❌');});
