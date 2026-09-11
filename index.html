@@ -345,7 +345,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
                 <button class="btn btn-g btn-sm" type="button" id="nv-cam-btn" onclick="toggleNvCam()">📷 Scanner</button>
               </div>
               <div id="nv-qr-reader" style="display:none;margin-top:10px;border-radius:var(--r2);overflow:hidden"></div>
-              <div id="nv-cam-st" style="font-size:11px;color:var(--gr);margin-top:4px">Utilisez la caméra ou une douchette pour scanner le code-barres au dos de la carte.</div>
+              <div id="nv-cam-st" style="font-size:11px;color:var(--gr);margin-top:4px">Approchez la caméra à ~8-10 cm du code-barres, bien à plat et sans reflet. Si le scan échoue, saisissez le numéro à la main.</div>
             </div>
             <div class="f" style="margin-bottom:10px"><label>Prénom</label><input class="inp" id="nv-p" placeholder="Prénom"></div>
             <div class="f" style="margin-bottom:10px"><label>Nom</label><input class="inp" id="nv-n" placeholder="Nom"></div>
@@ -853,7 +853,7 @@ function startNvCam() {
   var reader=document.getElementById('nv-qr-reader');
   reader.style.display='block';
   if(nvScanner){nvScanner.clear().catch(function(){});nvScanner=null;}
-  nvScanner = new Html5QrcodeScanner('nv-qr-reader',{fps:12,qrbox:{width:220,height:150},aspectRatio:1.4},{});
+  nvScanner = new Html5QrcodeScanner('nv-qr-reader',{fps:15,qrbox:{width:260,height:130},aspectRatio:1.6,videoConstraints:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}},{});
   nvScanner.render(function(r){onNvScan(r);},function(){});
   nvCamOn=true;
   document.getElementById('nv-cam-btn').textContent='⏹ Arrêter';
@@ -865,7 +865,7 @@ function stopNvCam() {
   nvCamOn=false;
   document.getElementById('nv-qr-reader').style.display='none';
   var b=document.getElementById('nv-cam-btn'); if(b) b.textContent='📷 Scanner';
-  var st=document.getElementById('nv-cam-st'); if(st) st.textContent='Utilisez la caméra ou une douchette pour scanner le code-barres au dos de la carte.';
+  var st=document.getElementById('nv-cam-st'); if(st) st.textContent='Approchez la caméra à ~8-10 cm du code-barres, bien à plat et sans reflet. Si le scan échoue, saisissez le numéro à la main.';
 }
 
 function onNvScan(r) {
@@ -973,7 +973,7 @@ function toggleCam() { if(!camOn) startCam(); else stopCam(); }
 function startCam() {
   document.getElementById('scan-st').textContent='Initialisation…';
   if(scanner){scanner.clear().catch(function(){});scanner=null;}
-  scanner = new Html5QrcodeScanner('qr-reader',{fps:12,qrbox:{width:220,height:220},aspectRatio:1.0},{});
+  scanner = new Html5QrcodeScanner('qr-reader',{fps:15,qrbox:{width:250,height:180},aspectRatio:1.4,videoConstraints:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}},{});
   scanner.render(function(r){onScan(r);},function(){});
   camOn=true;
   document.getElementById('btn-cam').textContent='⏹ Arrêter';
