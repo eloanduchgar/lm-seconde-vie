@@ -243,7 +243,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
     <nav class="snav" aria-label="Navigation principale">
       <button class="ni active" onclick="nav('accueil',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>Tableau de bord</button>
       <button class="ni" onclick="nav('scanner',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17h3v3M14 20h3"/></svg>Scanner</button>
-      <button class="ni" onclick="nav('depot',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>Dépôt article</button>
+      <button class="ni" onclick="nav('depot',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Inscription</button>
       <div class="nsep"></div>
       <button class="ni" onclick="nav('eleves',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Élèves</button>
       <button class="ni" onclick="nav('baremes',this)"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>Barèmes</button>
@@ -263,7 +263,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
       <div class="tb-r">
         <div class="tstat"><span class="tstat-v" id="tb-e">0</span><span class="tstat-l">élèves</span></div>
         <div class="tstat"><span class="tstat-v" id="tb-p">0</span><span class="tstat-l">pts distribués</span></div>
-        <button class="btn btn-r btn-sm" onclick="nav('depot',document.querySelectorAll('.ni')[2])">+ Dépôt</button>
+        <button class="btn btn-r btn-sm" onclick="nav('scanner',document.querySelectorAll('.ni')[1])">📷 Scanner</button>
       </div>
     </div>
     <div class="ct">
@@ -304,8 +304,6 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
               <div class="card"><div class="ctit" style="margin-bottom:11px">Envoyer la carte</div>
                 <div class="stiles">
                   <div class="stile" onclick="shareCard('email')"><div class="stile-i">📧</div><div class="stile-l">Email</div></div>
-                  <div class="stile" onclick="shareCard('sms')"><div class="stile-i">💬</div><div class="stile-l">SMS</div></div>
-                  <div class="stile" onclick="shareCard('print')"><div class="stile-i">🖨️</div><div class="stile-l">Imprimer</div></div>
                 </div>
               </div>
             </div>
@@ -314,48 +312,32 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,.n
       </div>
       <!-- DÉPÔT -->
       <div class="page" id="page-depot">
-        <div class="g2" style="align-items:start">
-          <div class="card">
-            <div class="ctit">Enregistrer un dépôt</div>
-            <div class="f" style="margin-bottom:11px"><label>Élève</label><select class="sel" id="depot-el"><option value="">Sélectionner…</option></select></div>
-            <div class="g2" style="margin-bottom:11px">
-              <div class="f"><label>Catégorie</label><select class="sel" id="depot-cat" onchange="updateDP()"><option value="">Catégorie…</option></select></div>
-              <div class="f"><label>État</label><div class="rg" id="depot-eg"><button class="rb active" onclick="setEtat('tbe',this)">TBE</button><button class="rb" onclick="setEtat('be',this)">Bon état</button><button class="rb" onclick="setEtat('use',this)">Usé</button></div></div>
+        <div class="card" style="max-width:640px">
+          <div class="ctit">Nouvel élève</div>
+          <div class="f" style="margin-bottom:11px">
+            <label>Type de carte</label>
+            <div class="rg" id="nv-tg">
+              <button class="rb active" type="button" onclick="setNvType('region',this)">🪪 Carte Région</button>
+              <button class="rb" type="button" onclick="setNvType('gen',this)">🚫 Sans carte Région</button>
             </div>
-            <div class="f" style="margin-bottom:11px"><label>Description</label><input class="inp" id="depot-desc" placeholder="Pull rouge taille M…"></div>
-            <div id="depot-prev" class="ph" style="display:none">
-              <div><div class="ph-l">Points à créditer</div><div class="ph-c" id="dp-c">—</div></div>
-              <div><div class="ph-n" id="dp-p">—</div><div style="font-size:11px;color:rgba(255,255,255,.3)">pts</div></div>
-            </div>
-            <button class="btn btn-r btn-lg" style="width:100%;margin-top:13px" onclick="validerDepot()">✅ Valider et créditer</button>
           </div>
-          <div class="card">
-            <div class="ctit">Nouvel élève</div>
-            <div class="f" style="margin-bottom:11px">
-              <label>Type de carte</label>
-              <div class="rg" id="nv-tg">
-                <button class="rb active" type="button" onclick="setNvType('region',this)">🪪 Carte Région</button>
-                <button class="rb" type="button" onclick="setNvType('gen',this)">🚫 Sans carte Région</button>
-              </div>
+          <div class="f" id="nv-cr-wrap" style="margin-bottom:10px">
+            <label for="nv-cr">N° de la carte Région</label>
+            <div style="display:flex;gap:7px">
+              <input class="inp" id="nv-cr" style="flex:1" inputmode="numeric" placeholder="Recopiez le N° imprimé en haut de la carte…" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('nv-p').focus();}">
+              <button class="btn btn-g btn-sm" type="button" id="nv-cam-btn" onclick="toggleNvCam()">📷 Essayer scan</button>
             </div>
-            <div class="f" id="nv-cr-wrap" style="margin-bottom:10px">
-              <label for="nv-cr">Numéro carte Région</label>
-              <div style="display:flex;gap:7px">
-                <input class="inp" id="nv-cr" style="flex:1" placeholder="Scanner ou saisir le code-barres…" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('nv-p').focus();}">
-                <button class="btn btn-g btn-sm" type="button" id="nv-cam-btn" onclick="toggleNvCam()">📷 Scanner</button>
-              </div>
-              <div id="nv-qr-reader" style="display:none;margin-top:10px;border-radius:var(--r2);overflow:hidden"></div>
-              <div id="nv-cam-st" style="font-size:11px;color:var(--gr);margin-top:4px">Approchez la caméra à ~8-10 cm du code-barres, bien à plat et sans reflet. Si le scan échoue, saisissez le numéro à la main.</div>
-            </div>
-            <div class="f" style="margin-bottom:10px"><label>Prénom</label><input class="inp" id="nv-p" placeholder="Prénom"></div>
-            <div class="f" style="margin-bottom:10px"><label>Nom</label><input class="inp" id="nv-n" placeholder="Nom"></div>
-            <div class="g2" style="margin-bottom:10px">
-              <div class="f"><label>Classe</label><input class="inp" id="nv-c" placeholder="2nde B…"></div>
-              <div class="f"><label>Email</label><input class="inp" id="nv-e" placeholder="email@…" type="email"></div>
-            </div>
-            <button class="btn btn-d" style="width:100%" onclick="creerEleve()">+ Créer la carte</button>
-            <div id="nv-res" style="margin-top:12px"></div>
+            <div id="nv-qr-reader" style="display:none;margin-top:10px;border-radius:var(--r2);overflow:hidden"></div>
+            <div id="nv-cam-st" style="font-size:11px;color:var(--gr);margin-top:4px">Le plus fiable : recopiez le <strong>N°</strong> imprimé en haut de la carte (le code-barres est trop petit sur ce format pour être scanné de façon fiable par une caméra de téléphone).</div>
           </div>
+          <div class="f" style="margin-bottom:10px"><label>Prénom</label><input class="inp" id="nv-p" placeholder="Prénom"></div>
+          <div class="f" style="margin-bottom:10px"><label>Nom</label><input class="inp" id="nv-n" placeholder="Nom"></div>
+          <div class="g2" style="margin-bottom:10px">
+            <div class="f"><label>Classe</label><input class="inp" id="nv-c" placeholder="2nde B…"></div>
+            <div class="f"><label>Email</label><input class="inp" id="nv-e" placeholder="email@…" type="email"></div>
+          </div>
+          <button class="btn btn-d" style="width:100%" onclick="creerEleve()">+ Créer la carte</button>
+          <div id="nv-res" style="margin-top:12px"></div>
         </div>
       </div>
       <!-- ÉLÈVES -->
@@ -483,7 +465,7 @@ var BAR = {
 };
 var CTR = 1;
 var unsubE = null, unsubH = null;
-var dE = 'tbe', crE = 'tbe';
+var crE = 'tbe';
 var curId = null;
 var camOn = false, scanner = null;
 
@@ -693,7 +675,7 @@ function toggleSB() {
 }
 
 // ════════ NAV ════════
-var TITL = {accueil:'Tableau de bord',scanner:'Scanner une carte',depot:'Dépôt & Inscription',eleves:'Élèves inscrits',baremes:'Barèmes de points',historique:'Historique',reglages:'Réglages'};
+var TITL = {accueil:'Tableau de bord',scanner:'Scanner une carte',depot:'Inscription élève',eleves:'Élèves inscrits',baremes:'Barèmes de points',historique:'Historique',reglages:'Réglages'};
 function nav(p, btn) {
   document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active');});
   document.getElementById('page-'+p).classList.add('active');
@@ -857,7 +839,7 @@ function startNvCam() {
   nvScanner.render(function(r){onNvScan(r);},function(){});
   nvCamOn=true;
   document.getElementById('nv-cam-btn').textContent='⏹ Arrêter';
-  document.getElementById('nv-cam-st').textContent='Pointez la caméra sur le code-barres de la carte…';
+  document.getElementById('nv-cam-st').textContent='Tentative de scan… (peu fiable sur ce format de carte, préférez la saisie du N°)';
 }
 
 function stopNvCam() {
@@ -865,7 +847,7 @@ function stopNvCam() {
   nvCamOn=false;
   document.getElementById('nv-qr-reader').style.display='none';
   var b=document.getElementById('nv-cam-btn'); if(b) b.textContent='📷 Scanner';
-  var st=document.getElementById('nv-cam-st'); if(st) st.textContent='Approchez la caméra à ~8-10 cm du code-barres, bien à plat et sans reflet. Si le scan échoue, saisissez le numéro à la main.';
+  var st=document.getElementById('nv-cam-st'); if(st) st.textContent='Le plus fiable : recopiez le N° imprimé en haut de la carte (le code-barres est trop petit sur ce format pour être scanné de façon fiable par une caméra de téléphone).';
 }
 
 function onNvScan(r) {
@@ -912,59 +894,14 @@ function creerEleve() {
 }
 
 // ════════ DÉPÔT ════════
-function setEtat(e,btn) {
-  dE=e;
-  document.querySelectorAll('#depot-eg .rb').forEach(function(b){b.classList.remove('active');});
-  btn.classList.add('active');
-  updateDP();
-}
-
 function fillDS() {
-  var sel=document.getElementById('depot-el');
-  sel.innerHTML='<option value="">Sélectionner…</option>'+[...E].sort(function(a,b){return (a.nom+a.prenom).localeCompare(b.nom+b.prenom);}).map(function(e){return '<option value="'+e.id+'">'+e.prenom+' '+e.nom+' — '+e.classe+'</option>';}).join('');
-  fillCS('depot-cat');
+  // La page ne contient plus que le formulaire d'inscription ; rien à pré-remplir ici.
 }
 
 function fillCS(selId) {
   var s=document.getElementById(selId);
   if(!s) return;
   s.innerHTML='<option value="">Catégorie…</option>'+CATS.map(function(c){return '<option value="'+c.id+'">'+c.emoji+' '+c.nom+'</option>';}).join('');
-}
-
-function updateDP() {
-  var cat=document.getElementById('depot-cat').value;
-  var pv=document.getElementById('depot-prev');
-  if(!cat){pv.style.display='none';return;}
-  var pts=ptsD(cat,dE); var c=getCat(cat);
-  pv.style.display='flex';
-  document.getElementById('dp-p').textContent=pts;
-  document.getElementById('dp-c').textContent=c.emoji+' '+c.nom+' · '+{tbe:'TBE',be:'Bon état',use:'Usé'}[dE];
-}
-
-function validerDepot() {
-  var eId=document.getElementById('depot-el').value;
-  var catId=document.getElementById('depot-cat').value;
-  var desc=document.getElementById('depot-desc').value.trim();
-  if(!eId){toast('Sélectionnez un élève','⚠️');return;}
-  if(!catId){toast('Sélectionnez une catégorie','⚠️');return;}
-  var pts=ptsD(catId,dE);
-  var eleve=E.find(function(e){return e.id===eId;});
-  var cat=getCat(catId);
-  syncing();
-  eleve.points+=pts; eleve.depots++;
-  db.collection('eleves').doc(eId).update({points:eleve.points,depots:eleve.depots}).then(function(){
-    var hItem={eleveId:eId,type:'depot',catId:catId,pts:pts,etat:dE,desc:desc||(cat.emoji+' '+cat.nom),date:tsNow()};
-    return db.collection('historique').add(hItem);
-  }).then(function(){
-    synced(); toast('🎉 +'+pts+' pts → '+eleve.prenom+' '+eleve.nom);
-    if(eleve.email) sendEmail(eleve,'credit',pts,desc||(cat.emoji+' '+cat.nom));
-    document.getElementById('depot-el').value='';
-    document.getElementById('depot-cat').value='';
-    document.getElementById('depot-desc').value='';
-    document.getElementById('depot-prev').style.display='none';
-    dE='tbe';
-    document.querySelectorAll('#depot-eg .rb').forEach(function(b,i){b.classList.toggle('active',i===0);});
-  }).catch(function(e){eleve.points-=pts;eleve.depots--;offline();toast('Erreur Firestore','❌');});
 }
 
 // ════════ SCANNER ════════
@@ -1109,15 +1046,7 @@ function doRetrait() {
 // ════════ SHARE ════════
 function shareCard(method) {
   var el=E.find(function(e){return e.id===curId;}); if(!el) return;
-  if(method==='email'){
-    sendEmail(el,'carte',0,'');
-  } else if(method==='sms'){
-    window.open('sms:?body='+encodeURIComponent('LM Seconde Vie - '+el.prenom+' '+el.nom+' - '+el.id+' - '+el.points+' pts'));
-    toast('SMS préparé','💬');
-  } else {
-    window.print();
-    toast('Impression lancée','🖨️');
-  }
+  sendEmail(el,'carte',0,'');
 }
 
 // ════════ ÉLÈVES ════════
